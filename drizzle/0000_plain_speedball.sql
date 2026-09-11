@@ -107,7 +107,9 @@ CREATE TABLE "tasks" (
 	"priority" "task_priority" DEFAULT 'medium' NOT NULL,
 	"due_date" timestamp,
 	"completed_at" timestamp,
-	"user_id" uuid,
+	"assignee_id" uuid,
+	"owner_id" uuid,
+	"created_by" uuid,
 	"created_at" timestamp DEFAULT now() NOT NULL,
 	"updated_at" timestamp DEFAULT now() NOT NULL
 );
@@ -139,7 +141,9 @@ ALTER TABLE "reminders" ADD CONSTRAINT "reminders_task_id_tasks_id_fk" FOREIGN K
 ALTER TABLE "reminders" ADD CONSTRAINT "reminders_household_id_households_id_fk" FOREIGN KEY ("household_id") REFERENCES "public"."households"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "tasks" ADD CONSTRAINT "tasks_entity_id_entities_id_fk" FOREIGN KEY ("entity_id") REFERENCES "public"."entities"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "tasks" ADD CONSTRAINT "tasks_household_id_households_id_fk" FOREIGN KEY ("household_id") REFERENCES "public"."households"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "tasks" ADD CONSTRAINT "tasks_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "tasks" ADD CONSTRAINT "tasks_assignee_id_users_id_fk" FOREIGN KEY ("assignee_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "tasks" ADD CONSTRAINT "tasks_owner_id_users_id_fk" FOREIGN KEY ("owner_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "tasks" ADD CONSTRAINT "tasks_created_by_users_id_fk" FOREIGN KEY ("created_by") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 CREATE INDEX "ai_conversations_user_idx" ON "ai_conversations" USING btree ("user_id");--> statement-breakpoint
 CREATE INDEX "ai_conversations_household_idx" ON "ai_conversations" USING btree ("household_id");--> statement-breakpoint
 CREATE INDEX "audit_logs_actor_idx" ON "audit_logs" USING btree ("actor");--> statement-breakpoint
@@ -156,6 +160,6 @@ CREATE INDEX "reminders_household_idx" ON "reminders" USING btree ("household_id
 CREATE INDEX "reminders_trigger_idx" ON "reminders" USING btree ("trigger_at");--> statement-breakpoint
 CREATE INDEX "tasks_entity_idx" ON "tasks" USING btree ("entity_id");--> statement-breakpoint
 CREATE INDEX "tasks_household_idx" ON "tasks" USING btree ("household_id");--> statement-breakpoint
-CREATE INDEX "tasks_assignee_idx" ON "tasks" USING btree ("user_id");--> statement-breakpoint
+CREATE INDEX "tasks_assignee_idx" ON "tasks" USING btree ("assignee_id");--> statement-breakpoint
 CREATE INDEX "tasks_status_idx" ON "tasks" USING btree ("status");--> statement-breakpoint
 CREATE UNIQUE INDEX "users_email_idx" ON "users" USING btree ("email");

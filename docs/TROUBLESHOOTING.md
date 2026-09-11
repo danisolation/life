@@ -74,6 +74,41 @@ drizzle-kit không tự đọc `.env.local`. `drizzle.config.ts` đã gọi
 | 409 `already been confirmed` | Document đã confirm — đúng behavior, không phải bug |
 | Extraction toàn "Demo Store" | Đang dùng `AI_PROVIDER=mock` — cần provider thật ([ROADMAP.md](ROADMAP.md#phase-5--ai-thật)) |
 
+## Schema & migration
+
+### `column "xxx" specified more than once` khi INSERT
+
+Hai cột khác nhau trong Drizzle map về **cùng tên cột DB**. Ví dụ từng gặp:
+`tasks.assigneeId/ownerId/createdBy` đều là `uuid("user_id")` → Postgres chỉ
+tạo 1 cột, Drizzle sinh INSERT lặp. Fix: đặt tên cột DB duy nhất cho mỗi field
+(`assignee_id`, `owner_id`, `created_by`).
+
+### `drizzle-kit generate` báo "Interactive prompts require a TTY"
+
+drizzle-kit muốn hỏi rename vs drop/add (không hỏi được trong shell). Cách xử lý:
+
+- **Dev, không có data quan trọng:** reset sạch rồi generate lại:
+  ```bash
+  rm -rf drizzle
+  docker exec life-admin-postgres psql -U lifeadmin -d life_admin_os \
+    -c "DROP SCHEMA IF EXISTS public CASCADE; DROP SCHEMA IF EXISTS drizzle CASCADE; CREATE SCHEMA public;"
+  npm run db:generate && npm run db:migrate
+  ```
+  (Phải drop cả schema `drizzle` — đó là nơi lưu `__drizzle_migrations`;
+  chỉ drop `public` sẽ khiến migrate tưởng đã chạy và bỏ qua.)
+- **Có data:** chạy `drizzle-kit generate` trong terminal TTY thật để tự chọn,
+  hoặc viết migration SQL tay + cập nhật `drizzle/meta`.
+
+### `npm run db:migrate` báo success nhưng `\dt` trống
+
+Schema `public` bị drop nhưng schema `drizzle` (journal) còn → migrate skip.
+Drop cả hai như trên.
+
+### Lệnh `rm`/`ls` tác động nhầm thư mục
+
+Shell mặc định chạy ở `/home/danisolation/life`, không phải project. Luôn
+`cd /home/danisolation/life/life-admin-os` hoặc dùng `cwd` tường minh.
+
 ## Build/typecheck
 
 - `npx tsc --noEmit` phải sạch — lỗi `Cannot find module 'X'` sau install sạch

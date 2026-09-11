@@ -96,7 +96,8 @@ detail page). Entity archive bằng `archivedAt` (xóa mềm) — list `/life` l
 | `/inbox` | `(dashboard)/inbox/page.tsx` | `InboxUpload` + `InboxItems` |
 | `/life` | `(dashboard)/life/page.tsx` | Gom entity theo type + nút New Item |
 | `/life/[type]/[id]` | `(dashboard)/life/[type]/[id]/page.tsx` | Detail: attributes, documents, deadlines, relations |
-| `/tasks` | `(dashboard)/tasks/page.tsx` | List + checkbox local (chưa persist) |
+| `/deadlines` | `(dashboard)/deadlines/page.tsx` | Timeline nhóm theo urgency, snooze/dismiss, reminder→task |
+| `/tasks` | `(dashboard)/tasks/page.tsx` | List persist + New Task dialog (không còn checkbox local) |
 | `/ai` | `(dashboard)/ai/page.tsx` | Chat UI → mock response |
 | `/settings` | `(dashboard)/settings/page.tsx` | Profile, household, permissions (chưa save) |
 | `/login`, `/register` | `(auth)/` | Public, redirect vào `/` nếu đã login |

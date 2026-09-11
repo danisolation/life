@@ -76,10 +76,10 @@ export function UpcomingDeadlines({ reminders }: UpcomingDeadlinesProps) {
           </div>
         )}
         <Link
-          href="/life"
+          href="/deadlines"
           className="mt-4 flex items-center justify-center gap-1 text-sm font-medium text-primary hover:underline"
         >
-          View all
+          View all deadlines
           <ChevronRight className="h-4 w-4" />
         </Link>
       </CardContent>

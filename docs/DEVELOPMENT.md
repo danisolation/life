@@ -73,10 +73,11 @@ uploads/                 file user upload (gitignored, backup riêng)
 
 ## 7. Nợ kỹ thuật đã biết (đừng ngạc nhiên)
 
-- Task checkbox chỉ đổi state local, chưa PATCH xuống DB.
 - Settings inputs chưa lưu (chưa có handler).
 - `policy-engine` viết xong chưa route nào dùng.
 - `aiConversations` có bảng nhưng chat stateless.
 - Entity detail chỉ xem attributes + sửa name/description qua dialog; chưa sửa
   từng attribute trên detail page (dùng PATCH API để merge).
 - Chưa có UI xem/khôi phục entity đã archive (query tay hoặc PATCH `archived:false`).
+- Reminder đã dismiss bị ẩn khỏi `/deadlines`, chưa có UI reopen.
+- Tasks chưa có UI gán assignee/owner (cột đã có trong DB).

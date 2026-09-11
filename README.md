@@ -73,10 +73,11 @@ Chi tiết từng bước: [`docs/SETUP.md`](docs/SETUP.md).
 
 ## Trạng thái hiện tại
 
-- [x] Phase 1 — Foundation: auth, household, navigation 6 trang
+- [x] Phase 1 — Foundation: auth, household, navigation
 - [x] Phase 2 — Inbox thật: upload → AI extract → confirm → entity + reminders + audit
 - [x] Phase 3 — Life Graph: entity detail, tạo/sửa/archive, relations 2 chiều
+- [x] Phase 4 — Deadline engine: timeline, snooze/dismiss, reminder→task, tasks persist
 - [x] Database live, migration chạy, auth loop verify end-to-end
-- [ ] Phase 4–6 — Deadline engine UI, AI thật/search/brief, tasks/workflows
+- [ ] Phase 5–6 — AI thật/search/brief, household, workflow templates
 
 Chi tiết: [`docs/ROADMAP.md`](docs/ROADMAP.md).

@@ -73,6 +73,30 @@ renewalDate...` → deadline đúng ngày + prep trước 30 ngày + prep trư�
 | POST | `/api/entity-relations` | `{fromEntityId, toEntityId, relationType, metadata?}` | 201 `{relation}` · 400 self-link/invalid · 404 entity ngoài household · 409 đã tồn tại |
 | DELETE | `/api/entity-relations?id=<relId>` | — | `{message}` · 404 nếu không thuộc household |
 
+## Reminders
+
+| Method | Path | Input | Response |
+| ------ | ---- | ----- | -------- |
+| GET | `/api/reminders?status=scheduled` | query `status` optional | `{reminders: [...]}` kèm entity, sort theo triggerAt |
+| PATCH | `/api/reminders/[id]` | `{status?}` hoặc `{snoozeDays?}` | `{reminder}` — snooze dời `triggerAt` + về `scheduled` |
+
+`status`: `scheduled` \| `sent` \| `dismissed` \| `snoozed`. `snoozeDays` số dương (1/7/30).
+
+## Tasks
+
+| Method | Path | Input | Response |
+| ------ | ---- | ----- | -------- |
+| GET | `/api/tasks` | — | `{tasks: [...]}` |
+| POST | `/api/tasks` | `{title, description?, priority?, dueDate?, entityId?, reminderId?}` | 201 `{task}` |
+| PATCH | `/api/tasks/[id]` | `{title?, description?, status?, priority?, dueDate?}` | `{task}` |
+| DELETE | `/api/tasks/[id]` | — | `{message}` |
+
+- `reminderId`: tạo task từ reminder → kế thừa `entityId` + `dueDate`, set
+  `reminders.taskId` và chuyển reminder sang `dismissed`.
+- `status`: `pending` \| `in_progress` \| `completed` \| `cancelled`
+  (`completed` tự set `completedAt`).
+- `priority`: `low` \| `medium` \| `high` \| `urgent`.
+
 ## AI
 
 | Method | Path | Input | Response |
@@ -100,7 +124,6 @@ curl -s -b cj.txt "$B/api/entities?type=warranty" | head -c 300; echo
 
 ## Chưa có (để roadmap)
 
-- `PATCH /api/tasks/[id]` (toggle task persist — checkbox hiện chỉ local)
 - `GET /api/search?q=` (semantic + structured)
 - `GET /api/brief/weekly` (Weekly Life Brief)
 - `POST /api/household/members` (mời member)

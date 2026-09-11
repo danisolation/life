@@ -31,14 +31,19 @@
 - [x] Archive/restore entity (xóa mềm) + ẩn khỏi list
 - [x] API + UI tạo/xóa relation giữa 2 entity (chống trùng → 409)
 - [x] Fix root `src/app/page.tsx`: xóa file mặc định trùng route với `(dashboard)/page.tsx`
-- [ ] Tạo/sửa task thủ công, task templates
+- [ ] Task templates (warranty claim, cancellation, renewal review)
 - [ ] Sửa attributes trực tiếp trên detail page (hiện chỉ xem + dialog sửa name/desc)
 
 ### Phase 4 — Deadline engine UI
-- [ ] Calendar/timeline view reminders (hiện chỉ list ở Home)
-- [ ] Snooze/dismiss reminder (PATCH status: scheduled→snoozed/dismissed)
-- [ ] "What happens if I do nothing?" — consequence text đã có ở message, cần UI nổi bật
-- [ ] Prep-task auto-generation từ reminder (nối reminders → tasks)
+- [x] Trang `/deadlines`: timeline nhóm theo Overdue / This week / This month / Later
+- [x] Consequence ("what happens if I do nothing") hiển thị từ `reminder.message`
+- [x] Snooze 1 ngày / 1 tuần / 1 tháng + dismiss reminder (PATCH status/triggerAt)
+- [x] Reminder → task: nút Task tạo task kế thừa entity + dueDate, dismiss reminder
+- [x] Task persistence: checkbox toggle, sửa priority/dueDate, cancel/delete
+- [x] Nút "New Task" (dialog), link task ↔ entity
+- [x] Fix bug schema: 3 cột `tasks` cùng map `user_id` → tách `assignee_id`/`owner_id`/`created_by`
+- [ ] Reopen reminder đã dismiss (hiện dismiss xong ẩn khỏi list)
+- [ ] Timeline/calendar dạng lịch tháng (hiện là danh sách nhóm)
 
 ### Phase 5 — AI thật
 - [ ] **AI provider thật**: `ClaudeProvider` hoặc `OpenAIProvider` implement

@@ -56,7 +56,13 @@ npm run db:studio
 ```
 
 `drizzle.config.ts` tự load `.env.local` qua `dotenv` (drizzle-kit không tự
-đọc env file). Migration đã apply: `drizzle/0000_flashy_mikhail_rasputin.sql`.
+đọc env file). Migration đã apply: `drizzle/0000_plain_speedball.sql`.
+
+> **Cảnh báo schema:** mỗi cột phải có tên DB **duy nhất trong bảng**. Bug đã
+> gặp: `tasks.assigneeId/ownerId/createdBy` cùng map về `user_id` → Postgres
+> chỉ tạo 1 cột, còn Drizzle sinh INSERT 3 lần `user_id` → lỗi
+> `column "user_id" specified more than once`. Đã sửa thành
+> `assignee_id` / `owner_id` / `created_by`.
 
 > **Quy tắc:** `db:push` chỉ dùng ở local. Deploy/share luôn dùng
 > `generate` + `migrate` để có lịch sử SQL trong git.
