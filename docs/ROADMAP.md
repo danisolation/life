@@ -1,0 +1,64 @@
+# ROADMAP — Đã xong gì, tiếp theo làm gì
+
+## Đã hoàn thành (đã verify end-to-end)
+
+### Phase 1 — Foundation
+- [x] Next.js 16 + TS strict + Tailwind v4 + shadcn/ui
+- [x] Drizzle schema 10 bảng (Life Admin Graph) + migration đầu tiên
+- [x] NextAuth v5: credentials (bcrypt) + Google optional, JWT session
+- [x] Đăng ký tự tạo household + role admin; mọi query scope household
+- [x] Navigation shell 6 trang (Home/Inbox/Life/Tasks/AI/Settings) + mobile nav
+
+### Phase 2 — Inbox thật
+- [x] Upload persist disk (`src/lib/storage.ts`, validate type/size)
+- [x] CaptureAgent + MockProvider (fixture để test không cần key)
+- [x] Review UI: sửa field, chọn entity type, highlight confidence < 0.7
+- [x] Confirm → entity + auto-reminders (deadline/prep-30d/prep-7d) + audit log
+- [x] File serving scope household (`/api/files/[name]`), chống double-confirm (409)
+- [x] Verify: upload → confirm → entity + 3 reminders + 2 audit rows
+
+### Hạ tầng / môi trường
+- [x] Postgres 17 container riêng (`life-admin-postgres`, port 5433)
+- [x] Workaround npm optional-deps bug (pin binary + postinstall script)
+- [x] Build webpack xanh, typecheck sạch
+
+## Tiếp theo (theo thứ tự đề xuất)
+
+### Phase 3 — Life Graph browser
+- [ ] Entity detail page (`/life/[type]/[id]`): attributes, documents, deadlines, relations
+- [ ] Tạo/sửa/archive entity thủ công (POST đã có, thêm PATCH/DELETE + UI form)
+- [ ] API + UI tạo relation giữa 2 entity (dùng `entity_relations` đã có schema)
+- [ ] Fix `src/app/page.tsx` root (redirect `/` hoặc landing)
+
+### Phase 4 — Deadline engine UI
+- [ ] Calendar/timeline view reminders (hiện chỉ list ở Home)
+- [ ] Snooze/dismiss reminder (PATCH status: scheduled→snoozed/dismissed)
+- [ ] "What happens if I do nothing?" — consequence text đã có ở message, cần UI nổi bật
+- [ ] Prep-task auto-generation từ reminder (nối reminders → tasks)
+
+### Phase 5 — AI thật
+- [ ] **AI provider thật**: `ClaudeProvider` hoặc `OpenAIProvider` implement
+      `AIProvider` (extract/chat/embed) — thay `AI_PROVIDER=mock`
+- [ ] Vision/PDF extraction (thay placeholder trong `storage.ts`)
+- [ ] Hiểu intent NL → graph query ("subscription nào trên $50?")
+- [ ] Weekly Life Brief + Life Admin Score theo Impact×Urgency×Risk×Confidence
+- [ ] Persist `ai_conversations` (bảng có sẵn, chat đang stateless)
+
+### Phase 6 — Tasks & household
+- [ ] Persist task toggle (PATCH status + completedAt)
+- [ ] Assign/owner, workflow templates (claim bảo hành, hủy sub)
+- [ ] Mời member vào household (hiện chỉ 1 user/household)
+- [ ] Cắm `policy-engine` vào mọi external/high-impact action
+
+### Production-hardening (trước khi public)
+- [ ] S3 (hoặc R2) thay upload local + virus scan
+- [ ] Rate limit API AI/upload, CSRF/validation rà soát
+- [ ] Auth secret rotation, Google OAuth production keys
+- [ ] Backup DB định kỳ (script + cron), xem [DATABASE.md](DATABASE.md#5-backup--restore)
+- [ ] Tests: unit (policy, deadline calc) + E2E (upload→confirm→view)
+- [ ] Dockerfile + compose (app + postgres) cho deploy 1 lệnh
+
+## Plan gốc
+
+Spec sản phẩm đầy đủ (40 mục, tầm nhìn Remember→Understand→Recommend→Act) đã
+được copy vào repo: [`docs/SPEC.md`](SPEC.md).
