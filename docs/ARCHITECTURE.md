@@ -65,9 +65,9 @@ contract, deadline, task, provider, person, document`.
 Relation types: `HAS_WARRANTY, HAS_RECEIPT, PAID_BY, PROVIDED_BY, BELONGS_TO,
 REMINDER_FOR, DEPENDS_ON, EXTENDS, CANCELS`.
 
-Hiện tại relations mới được định nghĩa schema, chưa có UI/API tạo relation
-giữa 2 entity khác nhau (confirm endpoint chỉ link document→entity qua
-`documents.entityId`).
+Relations giữa 2 entity tạo qua `POST /api/entity-relations` (UI ở entity
+detail page). Entity archive bằng `archivedAt` (xóa mềm) — list `/life` lọc
+`isNull(archivedAt)`; xóa vĩnh viễn cần `DELETE ?permanent=true`.
 
 ## 5. AI layer (hiện tại = mock)
 
@@ -94,7 +94,8 @@ giữa 2 entity khác nhau (confirm endpoint chỉ link document→entity qua
 | ----- | ---- | ------- |
 | `/` | `(dashboard)/page.tsx` | Health score, priority actions, stats, deadlines |
 | `/inbox` | `(dashboard)/inbox/page.tsx` | `InboxUpload` + `InboxItems` |
-| `/life` | `(dashboard)/life/page.tsx` | Gom entity theo type (chưa có detail page) |
+| `/life` | `(dashboard)/life/page.tsx` | Gom entity theo type + nút New Item |
+| `/life/[type]/[id]` | `(dashboard)/life/[type]/[id]/page.tsx` | Detail: attributes, documents, deadlines, relations |
 | `/tasks` | `(dashboard)/tasks/page.tsx` | List + checkbox local (chưa persist) |
 | `/ai` | `(dashboard)/ai/page.tsx` | Chat UI → mock response |
 | `/settings` | `(dashboard)/settings/page.tsx` | Profile, household, permissions (chưa save) |

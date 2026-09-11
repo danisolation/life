@@ -60,8 +60,18 @@ renewalDate...` → deadline đúng ngày + prep trước 30 ngày + prep trư�
 | ------ | ---- | ----- | -------- |
 | GET | `/api/entities?type=warranty` | query `type` optional | `{entities: [...]}` kèm outgoing/incoming relations |
 | POST | `/api/entities` | `{type, name, description?, attributes?, relations?[]}` | 201 `{entity}` |
+| GET | `/api/entities/[id]` | — | `{entity}` kèm relations, documents, tasks, reminders |
+| PATCH | `/api/entities/[id]` | `{name?, description?, attributes?, archived?}` | `{entity}` — attributes **merge**; `archived:true/false` để archive/restore |
+| DELETE | `/api/entities/[id]` | query `permanent=true` optional | Archive (mặc định) `{entity, archived:true}`; `?permanent=true` xóa hẳn |
 
 `relations[]`: `{toEntityId, relationType, metadata?}`.
+
+## Entity relations
+
+| Method | Path | Input | Response |
+| ------ | ---- | ----- | -------- |
+| POST | `/api/entity-relations` | `{fromEntityId, toEntityId, relationType, metadata?}` | 201 `{relation}` · 400 self-link/invalid · 404 entity ngoài household · 409 đã tồn tại |
+| DELETE | `/api/entity-relations?id=<relId>` | — | `{message}` · 404 nếu không thuộc household |
 
 ## AI
 
@@ -90,8 +100,7 @@ curl -s -b cj.txt "$B/api/entities?type=warranty" | head -c 300; echo
 
 ## Chưa có (để roadmap)
 
-- `PATCH/DELETE /api/entities/[id]` (archive, update)
-- `POST /api/entity-relations` (nối 2 entity)
-- `PATCH /api/tasks/[id]` (toggle task persist)
+- `PATCH /api/tasks/[id]` (toggle task persist — checkbox hiện chỉ local)
 - `GET /api/search?q=` (semantic + structured)
 - `GET /api/brief/weekly` (Weekly Life Brief)
+- `POST /api/household/members` (mời member)

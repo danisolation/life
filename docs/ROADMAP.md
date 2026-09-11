@@ -25,10 +25,14 @@
 ## Tiếp theo (theo thứ tự đề xuất)
 
 ### Phase 3 — Life Graph browser
-- [ ] Entity detail page (`/life/[type]/[id]`): attributes, documents, deadlines, relations
-- [ ] Tạo/sửa/archive entity thủ công (POST đã có, thêm PATCH/DELETE + UI form)
-- [ ] API + UI tạo relation giữa 2 entity (dùng `entity_relations` đã có schema)
-- [ ] Fix `src/app/page.tsx` root (redirect `/` hoặc landing)
+- [x] Entity detail page (`/life/[type]/[id]`): attributes, documents, deadlines, relations
+- [x] Tạo entity thủ công (dialog form + attribute key-value động)
+- [x] PATCH entity (sửa name/description/attributes, merge attributes)
+- [x] Archive/restore entity (xóa mềm) + ẩn khỏi list
+- [x] API + UI tạo/xóa relation giữa 2 entity (chống trùng → 409)
+- [x] Fix root `src/app/page.tsx`: xóa file mặc định trùng route với `(dashboard)/page.tsx`
+- [ ] Tạo/sửa task thủ công, task templates
+- [ ] Sửa attributes trực tiếp trên detail page (hiện chỉ xem + dialog sửa name/desc)
 
 ### Phase 4 — Deadline engine UI
 - [ ] Calendar/timeline view reminders (hiện chỉ list ở Home)

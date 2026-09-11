@@ -5,6 +5,7 @@ import { eq } from "drizzle-orm";
 import { ENTITY_TYPE_CONFIG, type EntityType } from "@/types";
 import { EntityList } from "@/components/entities/entity-list";
 import { EntityTabs } from "@/components/entities/entity-tabs";
+import { EntityCreateDialog } from "@/components/entities/entity-create-dialog";
 import { requireAuth } from "@/lib/session";
 
 export default async function LifePage() {
@@ -24,7 +25,8 @@ export default async function LifePage() {
   }
 
   const allEntities = await db.query.entities.findMany({
-    where: (ent, { and, eq }) => and(eq(ent.householdId, membership.householdId)),
+    where: (ent, { and, eq, isNull }) =>
+      and(eq(ent.householdId, membership.householdId), isNull(ent.archivedAt)),
     orderBy: (ent, { desc }) => [desc(ent.createdAt)],
   });
 
@@ -48,11 +50,14 @@ export default async function LifePage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Life Admin Graph</h1>
-        <p className="text-muted-foreground">
-          Browse and manage all your life admin entities and their relationships.
-        </p>
+      <div className="flex items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Life Admin Graph</h1>
+          <p className="text-muted-foreground">
+            Browse and manage all your life admin entities and their relationships.
+          </p>
+        </div>
+        <EntityCreateDialog />
       </div>
 
       <EntityTabs />
