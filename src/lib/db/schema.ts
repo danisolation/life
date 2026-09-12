@@ -81,6 +81,7 @@ export const households = pgTable("households", {
   name: varchar("name", { length: 255 }).notNull(),
   currency: varchar("currency", { length: 3 }).default("USD"),
   locale: varchar("locale", { length: 10 }).default("en-US"),
+  settings: jsonb("settings").default({}).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });

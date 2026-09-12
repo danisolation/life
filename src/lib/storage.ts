@@ -1,4 +1,4 @@
-import { writeFile, mkdir, unlink } from "node:fs/promises";
+import { writeFile, mkdir, unlink, readFile } from "node:fs/promises";
 import { join, basename } from "node:path";
 import { randomUUID } from "node:crypto";
 
@@ -73,6 +73,17 @@ export async function deleteStoredFile(storedName: string): Promise<void> {
   } catch {
     // File may already be gone — not fatal
   }
+}
+
+export async function readStoredFile(storedName: string): Promise<Buffer> {
+  return readFile(join(UPLOAD_DIR, basename(storedName)));
+}
+
+export function storedNameFromUrl(fileUrl: string): string | null {
+  const prefix = "/api/files/";
+  if (!fileUrl.startsWith(prefix)) return null;
+  const name = fileUrl.slice(prefix.length);
+  return name ? basename(name) : null;
 }
 
 function bufferToText(buffer: Buffer, mimeType: string): string {
