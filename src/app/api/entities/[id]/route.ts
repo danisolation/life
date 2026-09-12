@@ -83,7 +83,12 @@ export async function PATCH(
     if (typeof body.attributes !== "object" || body.attributes === null || Array.isArray(body.attributes)) {
       return NextResponse.json({ error: "attributes must be an object" }, { status: 400 });
     }
-    updates.attributes = { ...(entity.attributes as Record<string, unknown>), ...body.attributes };
+    const merged = { ...(entity.attributes as Record<string, unknown>) };
+    for (const [key, value] of Object.entries(body.attributes)) {
+      if (value === null || value === "") delete merged[key];
+      else merged[key] = value;
+    }
+    updates.attributes = merged;
   }
   if (body.archived !== undefined) {
     updates.archivedAt = body.archived ? new Date() : null;

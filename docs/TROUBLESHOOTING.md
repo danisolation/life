@@ -23,6 +23,30 @@ sau đó đều coi như "đã cài" (reify moves rỗng).
 > Đổi OS (macOS/Windows): thay 3 package binary trên bằng variant đúng
 > platform (`-darwin-arm64`, `-win32-x64-msvc`...) — xem npmjs của từng package.
 
+## Chạy trên Windows
+
+**Hiện tượng:** `npm install` dừng với
+`EBADPLATFORM ... Unsupported platform for @next/swc-linux-x64-gnu`.
+
+**Nguyên nhân:** 3 devDependency pin binary Linux (xem mục đầu file) không cài
+được trên win32; `.npmrc` `omit=optional` lại chặn luôn binary win32.
+
+**Fix:**
+```bash
+npm install --include=optional --force
+```
+- `--include=optional` override `omit=optional` → kéo về
+  `@next/swc-win32-x64-msvc`, `@tailwindcss/oxide-win32-x64-msvc`,
+  `lightningcss-win32-x64-msvc`.
+- `--force` bỏ qua check platform cho 3 package Linux (chúng nằm im, không dùng
+  trên Windows).
+- `package-lock.json` không đổi — lock đã có sẵn entry win32.
+
+**postinstall báo lỗi WSL (`HCS_E_CONNECTION_TIMEOUT`):** script
+`fix-native-bindings.sh` cần bash. Trên Windows nó vô nghĩa (chỉ copy binary
+Linux), nên bỏ qua được miễn là `node_modules/@next/swc-win32-x64-msvc` và
+`node_modules/@tailwindcss/oxide-win32-x64-msvc` tồn tại.
+
 ## Tailwind/PostCSS: "Module parse failed: Unexpected character '@'"
 
 **Hiện tượng:** dev server 500 ở mọi trang, log có `Module parse failed` ở

@@ -49,6 +49,9 @@ export class MockProvider implements AIProvider {
   name = "mock";
 
   async extract(document: DocumentInput): Promise<ExtractionResult> {
+    const expiry = new Date();
+    expiry.setMonth(expiry.getMonth() + 18);
+
     // Simulate extraction with fixture data
     return {
       entityType: "purchase",
@@ -59,6 +62,7 @@ export class MockProvider implements AIProvider {
         date: { value: new Date().toISOString().split("T")[0], confidence: 0.97, source: "mock" },
         product: { value: "Demo Product", confidence: 0.85, source: "mock" },
         warrantyPeriod: { value: "2 years", confidence: 0.72, source: "mock" },
+        expiryDate: { value: expiry.toISOString().split("T")[0], confidence: 0.72, source: "mock" },
       },
       suggestedRelations: [
         { targetType: "warranty", relationType: "HAS_WARRANTY", confidence: 0.72 },

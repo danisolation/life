@@ -27,6 +27,8 @@ gợi ý tiết kiệm và chuẩn bị hành động.
 # 1. Clone + cài đặt
 git clone <repo-url> life-admin-os && cd life-admin-os
 npm install            # postinstall tự fix native bindings
+# Windows: npm install --include=optional --force
+# (xem docs/TROUBLESHOOTING.md#chạy-trên-windows)
 
 # 2. Database (Docker)
 docker run -d --name life-admin-postgres --restart unless-stopped \
@@ -75,8 +77,8 @@ Chi tiết từng bước: [`docs/SETUP.md`](docs/SETUP.md).
 
 - [x] Phase 1 — Foundation: auth, household, navigation
 - [x] Phase 2 — Inbox thật: upload → AI extract → confirm → entity + reminders + audit
-- [x] Phase 3 — Life Graph: entity detail, tạo/sửa/archive, relations 2 chiều
-- [x] Phase 4 — Deadline engine: timeline, snooze/dismiss, reminder→task, tasks persist
+- [x] Phase 3 — Life Graph: entity detail, sửa attributes inline, tạo/sửa/archive, relations 2 chiều
+- [x] Phase 4 — Deadline engine: timeline, snooze/dismiss/reopen, reminder→task, tasks persist
 - [x] Database live, migration chạy, auth loop verify end-to-end
 - [ ] Phase 5–6 — AI thật/search/brief, household, workflow templates
 
