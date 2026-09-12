@@ -2,6 +2,7 @@ import { db } from "@/lib/db";
 import { TaskList } from "@/components/tasks/task-list";
 import { TaskCreateDialog } from "@/components/tasks/task-create-dialog";
 import { requireAuth } from "@/lib/session";
+import { PageHeader } from "@/components/layout/page-header";
 
 export default async function TasksPage() {
   const session = await requireAuth();
@@ -13,7 +14,7 @@ export default async function TasksPage() {
   if (!membership) {
     return (
       <div className="space-y-6">
-        <h1 className="text-3xl font-bold">Tasks</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">Tasks</h1>
         <p className="text-muted-foreground">Setting up your household...</p>
       </div>
     );
@@ -40,15 +41,11 @@ export default async function TasksPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Tasks</h1>
-          <p className="text-muted-foreground">
-            Manage your tasks and workflows.
-          </p>
-        </div>
-        <TaskCreateDialog />
-      </div>
+      <PageHeader
+        title="Tasks"
+        description="Manage your tasks and workflows."
+        action={<TaskCreateDialog />}
+      />
 
       <TaskList tasks={serialized} />
     </div>

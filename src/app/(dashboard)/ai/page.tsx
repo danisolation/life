@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { AIChat } from "@/components/ai/ai-chat";
+import { PageHeader } from "@/components/layout/page-header";
 import { requireAuth } from "@/lib/session";
 
 export default async function AIPage() {
@@ -7,13 +8,10 @@ export default async function AIPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">AI Assistant</h1>
-        <p className="text-muted-foreground">
-          Ask questions about your life admin, get recommendations, and take
-          action.
-        </p>
-      </div>
+      <PageHeader
+        title="AI Assistant"
+        description="Ask questions about your life admin, get recommendations, and take action."
+      />
 
       <AIChat />
     </div>

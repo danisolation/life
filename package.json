@@ -7,8 +7,10 @@
     "build": "next build --webpack",
     "start": "next start",
     "lint": "eslint",
+    "test": "node --experimental-strip-types --test \"src/**/*.test.ts\"",
     "postinstall": "bash scripts/fix-native-bindings.sh",
     "db:generate": "drizzle-kit generate",
+    "db:seed": "node --experimental-strip-types --env-file=.env.local scripts/seed-demo.ts",
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio"

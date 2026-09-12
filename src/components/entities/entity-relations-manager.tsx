@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/dialog";
 import { Plus, X, Loader2, ArrowRight } from "lucide-react";
 import { ENTITY_TYPE_CONFIG, type EntityType, type RelationType } from "@/types";
+import { EmptyState } from "@/components/layout/empty-state";
 
 interface RelatedItem {
   id: string;
@@ -50,6 +51,11 @@ const RELATION_LABELS: Record<RelationType, string> = {
   CANCELS: "cancels",
 };
 
+function EntityIcon({ type, className }: { type: string; className?: string }) {
+  const Icon = ENTITY_TYPE_CONFIG[type as EntityType]?.icon;
+  return Icon ? <Icon aria-hidden className={className} /> : null;
+}
+
 interface EntityOption {
   id: string;
   type: string;
@@ -71,16 +77,28 @@ export function EntityRelationsManager({
 
   useEffect(() => {
     if (!open) return;
-    setIsLoading(true);
-    fetch("/api/entities")
-      .then((r) => r.json())
-      .then((data) => {
+    let cancelled = false;
+
+    async function load() {
+      setIsLoading(true);
+      try {
+        const res = await fetch("/api/entities");
+        const data = await res.json();
+        if (cancelled) return;
         setEntities(
           (data.entities || []).filter((e: EntityOption) => e.id !== entityId)
         );
-      })
-      .catch(() => setError("Could not load entities"))
-      .finally(() => setIsLoading(false));
+      } catch {
+        if (!cancelled) setError("Could not load entities");
+      } finally {
+        if (!cancelled) setIsLoading(false);
+      }
+    }
+
+    void load();
+    return () => {
+      cancelled = true;
+    };
   }, [open, entityId]);
 
   async function handleAdd() {
@@ -125,9 +143,10 @@ export function EntityRelationsManager({
   return (
     <div className="space-y-4">
       {!hasAny && (
-        <p className="text-sm text-muted-foreground">
-          No relationships yet. Link this item to related records.
-        </p>
+        <EmptyState
+          title="No relationships yet"
+          description="Link this item to related records."
+        />
       )}
 
       {outgoing.length > 0 && (
@@ -142,7 +161,7 @@ export function EntityRelationsManager({
                 href={`/life/${rel.entityType}/${rel.entityId}`}
                 className="flex items-center gap-1 truncate hover:underline"
               >
-                <span>{ENTITY_TYPE_CONFIG[rel.entityType as EntityType]?.icon}</span>
+                <EntityIcon type={rel.entityType} className="h-4 w-4 shrink-0" />
                 <span className="truncate">{rel.entityName}</span>
               </Link>
               <Button
@@ -170,7 +189,7 @@ export function EntityRelationsManager({
                 href={`/life/${rel.entityType}/${rel.entityId}`}
                 className="flex items-center gap-1 truncate hover:underline"
               >
-                <span>{ENTITY_TYPE_CONFIG[rel.entityType as EntityType]?.icon}</span>
+                <EntityIcon type={rel.entityType} className="h-4 w-4 shrink-0" />
                 <span className="truncate">{rel.entityName}</span>
               </Link>
               <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0" />
@@ -240,7 +259,8 @@ export function EntityRelationsManager({
                   ) : (
                     entities.map((e) => (
                       <SelectItem key={e.id} value={e.id}>
-                        {ENTITY_TYPE_CONFIG[e.type as EntityType]?.icon} {e.name}
+                        <EntityIcon type={e.type} />
+                        <span>{e.name}</span>
                       </SelectItem>
                     ))
                   )}

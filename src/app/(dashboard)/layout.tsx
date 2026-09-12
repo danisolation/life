@@ -14,11 +14,11 @@ export default async function DashboardLayout({
   }
 
   return (
-    <div className="flex h-screen overflow-hidden">
+    <div className="flex h-dvh overflow-hidden">
       <div className="hidden lg:block">
         <Sidebar />
       </div>
-      <main className="flex-1 overflow-y-auto pb-14 lg:pb-0">
+      <main className="flex-1 overflow-y-auto overscroll-contain pb-16 lg:pb-0">
         <div className="container mx-auto p-4 lg:p-8">{children}</div>
       </main>
       <MobileNav />

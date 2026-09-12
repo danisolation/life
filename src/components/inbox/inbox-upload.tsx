@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -56,32 +56,32 @@ export function InboxUpload() {
   const [entityName, setEntityName] = useState("");
   const [editedFields, setEditedFields] = useState<Record<string, string>>({});
 
-  const handleDragOver = useCallback((e: React.DragEvent) => {
+  function handleDragOver(e: React.DragEvent) {
     e.preventDefault();
     setIsDragging(true);
-  }, []);
+  }
 
-  const handleDragLeave = useCallback((e: React.DragEvent) => {
+  function handleDragLeave(e: React.DragEvent) {
     e.preventDefault();
     setIsDragging(false);
-  }, []);
+  }
 
-  const handleDrop = useCallback((e: React.DragEvent) => {
+  function handleDrop(e: React.DragEvent) {
     e.preventDefault();
     setIsDragging(false);
     const files = e.dataTransfer.files;
     if (files.length > 0) {
       void handleFileUpload(files[0]);
     }
-  }, []);
+  }
 
-  const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+  function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
     const files = e.target.files;
     if (files && files.length > 0) {
       void handleFileUpload(files[0]);
     }
     e.target.value = "";
-  }, []);
+  }
 
   async function handleFileUpload(file: File) {
     setIsUploading(true);
@@ -255,14 +255,17 @@ export function InboxUpload() {
       )}
 
       {confirmed && (
-        <Card className="border-green-200 bg-green-50">
+        <Card className="border-success-muted bg-success-muted">
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
-              <CheckCircle className="h-5 w-5 text-green-600" />
+              <CheckCircle aria-hidden className="h-5 w-5 text-success-muted-foreground" />
               <div>
-                <p className="font-medium text-green-800">Saved to Life Admin Graph</p>
-                <p className="text-sm text-green-600">
-                  {confirmed.remindersCreated} reminder
+                <p className="font-medium text-success-muted-foreground">
+                  Saved to Life Admin Graph
+                </p>
+                <p className="text-sm text-success-muted-foreground">
+                  <span className="tabular-nums">{confirmed.remindersCreated}</span>{" "}
+                  reminder
                   {confirmed.remindersCreated !== 1 ? "s" : ""} created.
                 </p>
               </div>
@@ -298,11 +301,15 @@ export function InboxUpload() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {ENTITY_TYPES.map((t) => (
-                      <SelectItem key={t} value={t}>
-                        {ENTITY_TYPE_CONFIG[t].icon} {ENTITY_TYPE_CONFIG[t].label}
-                      </SelectItem>
-                    ))}
+                    {ENTITY_TYPES.map((t) => {
+                      const Icon = ENTITY_TYPE_CONFIG[t].icon;
+                      return (
+                        <SelectItem key={t} value={t}>
+                          <Icon />
+                          <span>{ENTITY_TYPE_CONFIG[t].label}</span>
+                        </SelectItem>
+                      );
+                    })}
                   </SelectContent>
                 </Select>
               </div>
@@ -323,20 +330,24 @@ export function InboxUpload() {
                 return (
                   <div
                     key={key}
-                    className={`rounded border p-3 ${low ? "border-yellow-400 bg-yellow-50" : ""}`}
+                    className={`rounded border p-3 ${low ? "border-warning bg-warning-muted" : ""}`}
                   >
                     <div className="flex items-center justify-between mb-1">
                       <Label className="capitalize" htmlFor={`field-${key}`}>
                         {key.replace(/_/g, " ")}
-                        {low && <span className="ml-2 text-yellow-600">— please verify</span>}
+                        {low && (
+                          <span className="ml-2 text-warning-muted-foreground">
+                            — please verify
+                          </span>
+                        )}
                       </Label>
                       <span
-                        className={`text-xs font-medium ${
+                        className={`text-xs font-medium tabular-nums ${
                           field.confidence >= 0.9
-                            ? "text-green-500"
+                            ? "text-success-muted-foreground"
                             : field.confidence >= 0.7
-                              ? "text-yellow-600"
-                              : "text-red-500"
+                              ? "text-warning-muted-foreground"
+                              : "text-destructive"
                         }`}
                       >
                         {Math.round(field.confidence * 100)}%

@@ -3,12 +3,15 @@ import Link from "next/link";
 import { db } from "@/lib/db";
 import { requireAuth } from "@/lib/session";
 import { ENTITY_TYPE_CONFIG, type EntityType } from "@/types";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { EntityActions } from "@/components/entities/entity-actions";
+import { EntityAttributesEditor } from "@/components/entities/entity-attributes-editor";
 import { EntityRelationsManager } from "@/components/entities/entity-relations-manager";
+import { EntityDocuments } from "@/components/entities/entity-documents";
 import { ArrowLeft, FileText, Clock, Network, Info } from "lucide-react";
+import { daysUntil, startOfToday } from "@/lib/deadline-urgency";
 
 function formatValue(value: unknown): string {
   if (value === null || value === undefined || value === "") return "—";
@@ -63,6 +66,8 @@ export default async function EntityDetailPage({
 
   if (!entity) notFound();
 
+  const today = startOfToday();
+
   const config = ENTITY_TYPE_CONFIG[entity.type as EntityType];
   const attributes = entity.attributes as Record<string, unknown>;
   const attrEntries = Object.entries(attributes).filter(([, v]) => v !== null && v !== undefined && v !== "");
@@ -83,10 +88,12 @@ export default async function EntityDetailPage({
 
       <div className="flex items-start justify-between gap-4">
         <div className="flex items-start gap-3">
-          <span className="text-4xl">{config?.icon}</span>
+          {config && (
+            <config.icon aria-hidden className="h-8 w-8 shrink-0 text-muted-foreground" />
+          )}
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-3xl font-bold tracking-tight">{entity.name}</h1>
+              <h1 className="text-2xl font-semibold tracking-tight">{entity.name}</h1>
               <Badge variant="secondary">{config?.label}</Badge>
               {entity.archivedAt && <Badge variant="outline">Archived</Badge>}
             </div>
@@ -116,6 +123,12 @@ export default async function EntityDetailPage({
                 Details
               </CardTitle>
               <CardDescription>Extracted and confirmed attributes</CardDescription>
+              <CardAction>
+                <EntityAttributesEditor
+                  entityId={entity.id}
+                  attributes={attributes}
+                />
+              </CardAction>
             </CardHeader>
             <CardContent>
               {attrEntries.length === 0 ? (
@@ -184,9 +197,7 @@ export default async function EntityDetailPage({
               ) : (
                 <div className="space-y-3">
                   {sortedReminders.map((r) => {
-                    const days = Math.ceil(
-                      (new Date(r.triggerAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
-                    );
+                    const days = daysUntil(r.triggerAt, today);
                     return (
                       <div key={r.id} className="rounded border p-3">
                         <div className="flex items-start justify-between gap-2">
@@ -224,24 +235,15 @@ export default async function EntityDetailPage({
               <CardDescription>{entity.documents.length} attached</CardDescription>
             </CardHeader>
             <CardContent>
-              {entity.documents.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No documents attached.</p>
-              ) : (
-                <div className="space-y-2">
-                  {entity.documents.map((doc) => (
-                    <a
-                      key={doc.id}
-                      href={doc.fileUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-2 rounded border p-2 text-sm hover:bg-muted/50"
-                    >
-                      <FileText className="h-4 w-4 text-muted-foreground shrink-0" />
-                      <span className="truncate">{doc.fileName}</span>
-                    </a>
-                  ))}
-                </div>
-              )}
+              <EntityDocuments
+                entityId={entity.id}
+                documents={entity.documents.map((doc) => ({
+                  id: doc.id,
+                  fileName: doc.fileName,
+                  fileUrl: doc.fileUrl,
+                  status: doc.status,
+                }))}
+              />
             </CardContent>
           </Card>
         </div>

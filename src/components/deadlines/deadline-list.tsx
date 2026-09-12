@@ -13,6 +13,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ENTITY_TYPE_CONFIG, type EntityType } from "@/types";
+import { urgencyOf } from "@/lib/deadline-urgency";
+import { EmptyState } from "@/components/layout/empty-state";
+import { StatusBadge, urgencyTone } from "@/components/status-badge";
 import {
   Clock,
   AlertTriangle,
@@ -23,15 +26,17 @@ import {
   MoreHorizontal,
   Loader2,
   Info,
+  RotateCcw,
 } from "lucide-react";
 
-interface DeadlineItem {
+export interface DeadlineItem {
   id: string;
   type: string;
   title: string;
   message: string | null;
   triggerAt: string;
   status: string;
+  days: number;
   entityId: string | null;
   entityType: string | null;
   entityName: string | null;
@@ -39,16 +44,6 @@ interface DeadlineItem {
 
 interface DeadlineListProps {
   reminders: DeadlineItem[];
-}
-
-const DAY_MS = 1000 * 60 * 60 * 24;
-
-function daysUntil(dateStr: string): number {
-  const startOfToday = new Date();
-  startOfToday.setHours(0, 0, 0, 0);
-  const target = new Date(dateStr);
-  target.setHours(0, 0, 0, 0);
-  return Math.round((target.getTime() - startOfToday.getTime()) / DAY_MS);
 }
 
 interface Group {
@@ -69,43 +64,63 @@ export function DeadlineList({ reminders }: DeadlineListProps) {
     const week: DeadlineItem[] = [];
     const month: DeadlineItem[] = [];
     const later: DeadlineItem[] = [];
+    const dismissed: DeadlineItem[] = [];
 
     for (const r of reminders) {
-      const d = daysUntil(r.triggerAt);
-      if (d < 0) overdue.push(r);
-      else if (d <= 7) week.push(r);
-      else if (d <= 30) month.push(r);
-      else later.push(r);
+      if (r.status === "dismissed") {
+        dismissed.push(r);
+        continue;
+      }
+
+      switch (urgencyOf(r.days)) {
+        case "overdue":
+          overdue.push(r);
+          break;
+        case "today":
+        case "soon":
+          week.push(r);
+          break;
+        default:
+          if (r.days <= 30) month.push(r);
+          else later.push(r);
+      }
     }
 
     return [
       {
         key: "overdue",
         label: "Overdue",
-        icon: <AlertTriangle className="h-4 w-4" />,
+        icon: <AlertTriangle aria-hidden className="h-4 w-4" />,
         className: "border-destructive/40 bg-destructive/5",
         items: overdue,
       },
       {
         key: "week",
         label: "This week",
-        icon: <Clock className="h-4 w-4" />,
-        className: "border-orange-300 bg-orange-50",
+        icon: <Clock aria-hidden className="h-4 w-4" />,
+        className: "border-warning-muted bg-warning-muted",
         items: week,
       },
       {
         key: "month",
         label: "This month",
-        icon: <CalendarClock className="h-4 w-4" />,
-        className: "border-yellow-300 bg-yellow-50",
+        icon: <CalendarClock aria-hidden className="h-4 w-4" />,
+        className: "border-info-muted bg-info-muted",
         items: month,
       },
       {
         key: "later",
         label: "Later",
-        icon: <CalendarDays className="h-4 w-4" />,
+        icon: <CalendarDays aria-hidden className="h-4 w-4" />,
         className: "",
         items: later,
+      },
+      {
+        key: "dismissed",
+        label: "Dismissed",
+        icon: <X aria-hidden className="h-4 w-4" />,
+        className: "opacity-70",
+        items: dismissed,
       },
     ].filter((g) => g.items.length > 0);
   }, [reminders]);
@@ -143,7 +158,7 @@ export function DeadlineList({ reminders }: DeadlineListProps) {
           title: item.title,
           description: item.message,
           reminderId: item.id,
-          priority: daysUntil(item.triggerAt) <= 7 ? "high" : "medium",
+          priority: item.days <= 7 ? "high" : "medium",
         }),
       });
       if (!res.ok) {
@@ -164,16 +179,23 @@ export function DeadlineList({ reminders }: DeadlineListProps) {
   return (
     <div className="space-y-6">
       {error && (
-        <div className="rounded border border-destructive bg-destructive/5 p-3 text-sm text-destructive">
+        <div
+          role="alert"
+          className="rounded border border-destructive bg-destructive/5 p-3 text-sm text-destructive"
+        >
           {error}
         </div>
       )}
 
       {total === 0 ? (
         <Card>
-          <CardContent className="py-12 text-center text-muted-foreground">
-            No deadlines yet. Upload documents to your Inbox to start tracking
-            warranties, contracts, and renewals.
+          <CardContent>
+            <EmptyState
+              icon={CalendarClock}
+              title="No deadlines yet"
+              description="Upload documents to your Inbox to start tracking warranties, contracts, and renewals."
+              action={<Button render={<Link href="/inbox" />}>Go to Inbox</Button>}
+            />
           </CardContent>
         </Card>
       ) : (
@@ -182,13 +204,13 @@ export function DeadlineList({ reminders }: DeadlineListProps) {
             <div className="flex items-center gap-2">
               {group.icon}
               <h2 className="font-semibold">{group.label}</h2>
-              <span className="text-sm text-muted-foreground">
+              <span className="text-sm tabular-nums text-muted-foreground">
                 ({group.items.length})
               </span>
             </div>
             <div className="space-y-2">
               {group.items.map((item) => {
-                const d = daysUntil(item.triggerAt);
+                const d = item.days;
                 const busy = busyId === item.id;
                 const entityConfig = item.entityType
                   ? ENTITY_TYPE_CONFIG[item.entityType as EntityType]
@@ -201,21 +223,17 @@ export function DeadlineList({ reminders }: DeadlineListProps) {
                         <div className="min-w-0 flex-1">
                           <div className="flex flex-wrap items-center gap-2">
                             <p className="font-medium">{item.title}</p>
-                            <Badge
-                              variant={
-                                d < 0
-                                  ? "destructive"
-                                  : d <= 7
-                                    ? "default"
-                                    : "secondary"
-                              }
-                            >
-                              {d < 0
-                                ? `${Math.abs(d)}d overdue`
-                                : d === 0
-                                  ? "today"
-                                  : `${d}d`}
-                            </Badge>
+                            {item.status === "dismissed" ? (
+                              <StatusBadge tone="neutral">Dismissed</StatusBadge>
+                            ) : (
+                              <StatusBadge tone={urgencyTone(d)}>
+                                {d < 0
+                                  ? `${Math.abs(d)}d overdue`
+                                  : d === 0
+                                    ? "today"
+                                    : `${d}d`}
+                              </StatusBadge>
+                            )}
                             {item.type === "preparation" && (
                               <Badge variant="outline">prep</Badge>
                             )}
@@ -233,9 +251,10 @@ export function DeadlineList({ reminders }: DeadlineListProps) {
                                 {" · "}
                                 <Link
                                   href={`/life/${item.entityType}/${item.entityId}`}
-                                  className="font-medium text-foreground hover:underline"
+                                  className="inline-flex items-center gap-1 font-medium text-foreground hover:underline"
                                 >
-                                  {entityConfig.icon} {item.entityName}
+                                  <entityConfig.icon aria-hidden className="h-3 w-3" />
+                                  {item.entityName}
                                 </Link>
                               </>
                             )}
@@ -243,63 +262,89 @@ export function DeadlineList({ reminders }: DeadlineListProps) {
 
                           {item.message && (
                             <div className="mt-2 flex items-start gap-2 rounded bg-background/60 p-2 text-xs text-muted-foreground">
-                              <Info className="mt-0.5 h-3 w-3 shrink-0" />
+                              <Info aria-hidden className="mt-0.5 h-3 w-3 shrink-0" />
                               <span>{item.message}</span>
                             </div>
                           )}
                         </div>
 
                         <div className="flex shrink-0 items-center gap-1">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => createTask(item)}
-                            disabled={busy}
-                          >
-                            {busy ? (
-                              <Loader2 className="h-3 w-3 animate-spin" />
-                            ) : (
-                              <>
-                                <ListChecks className="mr-1 h-3 w-3" />
-                                Task
-                              </>
-                            )}
-                          </Button>
-
-                          <DropdownMenu>
-                            <DropdownMenuTrigger
-                              render={<Button variant="ghost" size="icon" />}
+                          {item.status === "dismissed" ? (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => act(item.id, { status: "scheduled" })}
+                              disabled={busy}
                             >
-                              <MoreHorizontal className="h-4 w-4" />
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem
-                                onClick={() => act(item.id, { snoozeDays: 1 })}
+                              {busy ? (
+                                <Loader2 className="h-3 w-3 animate-spin" />
+                              ) : (
+                                <>
+                                  <RotateCcw className="mr-1 h-3 w-3" />
+                                  Reopen
+                                </>
+                              )}
+                            </Button>
+                          ) : (
+                            <>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => createTask(item)}
+                                disabled={busy}
                               >
-                                Snooze 1 day
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onClick={() => act(item.id, { snoozeDays: 7 })}
-                              >
-                                Snooze 1 week
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onClick={() => act(item.id, { snoozeDays: 30 })}
-                              >
-                                Snooze 1 month
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
+                                {busy ? (
+                                  <Loader2 className="h-3 w-3 animate-spin" />
+                                ) : (
+                                  <>
+                                    <ListChecks className="mr-1 h-3 w-3" />
+                                    Task
+                                  </>
+                                )}
+                              </Button>
 
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => act(item.id, { status: "dismissed" })}
-                            disabled={busy}
-                            aria-label="Dismiss"
-                          >
-                            <X className="h-4 w-4" />
-                          </Button>
+                              <DropdownMenu>
+                                <DropdownMenuTrigger
+                                  render={
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      aria-label="More actions"
+                                    />
+                                  }
+                                >
+                                  <MoreHorizontal aria-hidden className="h-4 w-4" />
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuItem
+                                    onClick={() => act(item.id, { snoozeDays: 1 })}
+                                  >
+                                    Snooze 1 day
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                    onClick={() => act(item.id, { snoozeDays: 7 })}
+                                  >
+                                    Snooze 1 week
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                    onClick={() => act(item.id, { snoozeDays: 30 })}
+                                  >
+                                    Snooze 1 month
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => act(item.id, { status: "dismissed" })}
+                                disabled={busy}
+                                aria-label="Dismiss"
+                              >
+                                <X aria-hidden className="h-4 w-4" />
+                              </Button>
+                            </>
+                          )}
                         </div>
                       </div>
                     </CardContent>

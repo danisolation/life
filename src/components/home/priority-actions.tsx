@@ -1,8 +1,8 @@
 "use client";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { AlertCircle, Clock, AlertTriangle } from "lucide-react";
+import { StatusBadge, urgencyTone, priorityTone } from "@/components/status-badge";
+import { AlertCircle, AlertTriangle, CircleCheck, Clock } from "lucide-react";
 import Link from "next/link";
 
 interface Reminder {
@@ -11,6 +11,7 @@ interface Reminder {
   title: string;
   message: string | null;
   triggerAt: Date;
+  days: number;
 }
 
 interface Task {
@@ -26,27 +27,24 @@ interface PriorityActionsProps {
 }
 
 export function PriorityActions({ reminders, tasks }: PriorityActionsProps) {
-  const urgentTasks = tasks.filter((t) => t.priority === "urgent" || t.priority === "high");
-  const urgentReminders = reminders.filter((r) => {
-    const daysUntil = Math.ceil(
-      (new Date(r.triggerAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
-    );
-    return daysUntil <= 7;
-  });
+  const urgentTasks = tasks.filter(
+    (t) => t.priority === "urgent" || t.priority === "high"
+  );
+  const urgentReminders = reminders.filter((r) => r.days <= 7);
 
   const hasUrgentItems = urgentTasks.length > 0 || urgentReminders.length > 0;
 
   if (!hasUrgentItems) {
     return (
-      <Card className="border-green-200 bg-green-50">
+      <Card className="border-success-muted bg-success-muted">
         <CardContent className="pt-6">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-100">
-              <AlertCircle className="h-5 w-5 text-green-600" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-background/60">
+              <CircleCheck aria-hidden className="h-5 w-5 text-success-muted-foreground" />
             </div>
             <div>
-              <p className="font-medium text-green-800">All clear!</p>
-              <p className="text-sm text-green-600">
+              <p className="font-medium text-success-muted-foreground">All clear</p>
+              <p className="text-sm text-success-muted-foreground">
                 No urgent items need your attention right now.
               </p>
             </div>
@@ -57,53 +55,48 @@ export function PriorityActions({ reminders, tasks }: PriorityActionsProps) {
   }
 
   return (
-    <Card className="border-orange-200 bg-orange-50">
+    <Card className="border-warning-muted bg-warning-muted">
       <CardHeader className="pb-2">
-        <CardTitle className="flex items-center gap-2 text-base text-orange-800">
-          <AlertTriangle className="h-4 w-4" />
-          Requires Attention
+        <CardTitle className="flex items-center gap-2 text-base text-warning-muted-foreground">
+          <AlertTriangle aria-hidden className="h-4 w-4" />
+          Requires attention
         </CardTitle>
-        <CardDescription className="text-orange-600">
+        <CardDescription className="text-warning-muted-foreground">
           {urgentTasks.length + urgentReminders.length} item(s) need action
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-2">
-        {urgentReminders.slice(0, 2).map((reminder) => {
-          const daysUntil = Math.ceil(
-            (new Date(reminder.triggerAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
-          );
-          return (
-            <div
-              key={reminder.id}
-              className="flex items-center justify-between rounded bg-white/60 p-2"
-            >
-              <div className="flex items-center gap-2">
-                <Clock className="h-4 w-4 text-orange-500" />
-                <span className="text-sm">{reminder.title}</span>
-              </div>
-              <Badge variant={daysUntil <= 3 ? "destructive" : "secondary"}>
-                {daysUntil} day{daysUntil !== 1 ? "s" : ""}
-              </Badge>
+        {urgentReminders.slice(0, 2).map((reminder) => (
+          <div
+            key={reminder.id}
+            className="flex items-center justify-between rounded bg-background/60 p-2"
+          >
+            <div className="flex min-w-0 items-center gap-2">
+              <Clock aria-hidden className="h-4 w-4 shrink-0 text-warning-muted-foreground" />
+              <span className="truncate text-sm">{reminder.title}</span>
             </div>
-          );
-        })}
+            <StatusBadge tone={urgencyTone(reminder.days)}>
+              {reminder.days} day{reminder.days !== 1 ? "s" : ""}
+            </StatusBadge>
+          </div>
+        ))}
         {urgentTasks.slice(0, 2).map((task) => (
           <div
             key={task.id}
-            className="flex items-center justify-between rounded bg-white/60 p-2"
+            className="flex items-center justify-between rounded bg-background/60 p-2"
           >
-            <div className="flex items-center gap-2">
-              <AlertCircle className="h-4 w-4 text-orange-500" />
-              <span className="text-sm">{task.title}</span>
+            <div className="flex min-w-0 items-center gap-2">
+              <AlertCircle aria-hidden className="h-4 w-4 shrink-0 text-warning-muted-foreground" />
+              <span className="truncate text-sm">{task.title}</span>
             </div>
-            <Badge variant={task.priority === "urgent" ? "destructive" : "default"}>
-              {task.priority}
-            </Badge>
+            <StatusBadge tone={priorityTone(task.priority)}>
+              <span className="capitalize">{task.priority}</span>
+            </StatusBadge>
           </div>
         ))}
         <Link
           href="/tasks"
-          className="block pt-1 text-center text-sm font-medium text-orange-700 hover:underline"
+          className="block pt-1 text-center text-sm font-medium text-warning-muted-foreground hover:underline"
         >
           View all tasks
         </Link>

@@ -1,6 +1,8 @@
 import { db } from "@/lib/db";
 import { requireAuth } from "@/lib/session";
-import { DeadlineList } from "@/components/deadlines/deadline-list";
+import { DeadlineViews } from "@/components/deadlines/deadline-views";
+import { PageHeader } from "@/components/layout/page-header";
+import { daysUntil, startOfToday } from "@/lib/deadline-urgency";
 
 export default async function DeadlinesPage() {
   const session = await requireAuth();
@@ -12,19 +14,19 @@ export default async function DeadlinesPage() {
   if (!membership) {
     return (
       <div className="space-y-6">
-        <h1 className="text-3xl font-bold">Deadlines</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">Deadlines</h1>
         <p className="text-muted-foreground">Setting up your household...</p>
       </div>
     );
   }
 
   const reminderList = await db.query.reminders.findMany({
-    where: (r, { and, eq, ne }) =>
-      and(eq(r.householdId, membership.householdId), ne(r.status, "dismissed")),
+    where: (r, { eq }) => eq(r.householdId, membership.householdId),
     orderBy: (r, { asc }) => [asc(r.triggerAt)],
     with: { entity: true },
   });
 
+  const today = startOfToday();
   const serialized = reminderList.map((r) => ({
     id: r.id,
     type: r.type,
@@ -32,6 +34,7 @@ export default async function DeadlinesPage() {
     message: r.message,
     triggerAt: r.triggerAt.toISOString(),
     status: r.status,
+    days: daysUntil(r.triggerAt, today),
     entityId: r.entity?.id ?? null,
     entityType: r.entity?.type ?? null,
     entityName: r.entity?.name ?? null,
@@ -39,13 +42,11 @@ export default async function DeadlinesPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Deadlines</h1>
-        <p className="text-muted-foreground">
-          Every date that matters, with what happens if you do nothing.
-        </p>
-      </div>
-      <DeadlineList reminders={serialized} />
+      <PageHeader
+        title="Deadlines"
+        description="Every date that matters, with what happens if you do nothing."
+      />
+      <DeadlineViews reminders={serialized} />
     </div>
   );
 }

@@ -21,6 +21,10 @@
 - [x] Postgres 17 container riêng (`life-admin-postgres`, port 5433)
 - [x] Workaround npm optional-deps bug (pin binary + postinstall script)
 - [x] Build webpack xanh, typecheck sạch
+- [x] Chạy được trên Windows: `npm install --include=optional --force`
+      (xem [TROUBLESHOOTING.md](TROUBLESHOOTING.md#chạy-trên-windows))
+- [x] `npm run lint` 0 error (đã hết react-hooks purity/immutability; còn 38
+      warning unused-symbol có sẵn)
 
 ## Tiếp theo (theo thứ tự đề xuất)
 
@@ -32,7 +36,7 @@
 - [x] API + UI tạo/xóa relation giữa 2 entity (chống trùng → 409)
 - [x] Fix root `src/app/page.tsx`: xóa file mặc định trùng route với `(dashboard)/page.tsx`
 - [ ] Task templates (warranty claim, cancellation, renewal review)
-- [ ] Sửa attributes trực tiếp trên detail page (hiện chỉ xem + dialog sửa name/desc)
+- [x] Sửa attributes trực tiếp trên detail page (dialog field key/value; merge + xoá key qua `null`)
 
 ### Phase 4 — Deadline engine UI
 - [x] Trang `/deadlines`: timeline nhóm theo Overdue / This week / This month / Later
@@ -42,8 +46,21 @@
 - [x] Task persistence: checkbox toggle, sửa priority/dueDate, cancel/delete
 - [x] Nút "New Task" (dialog), link task ↔ entity
 - [x] Fix bug schema: 3 cột `tasks` cùng map `user_id` → tách `assignee_id`/`owner_id`/`created_by`
-- [ ] Reopen reminder đã dismiss (hiện dismiss xong ẩn khỏi list)
-- [ ] Timeline/calendar dạng lịch tháng (hiện là danh sách nhóm)
+- [x] Reopen reminder đã dismiss (nhóm "Dismissed" cuối timeline + nút Reopen → `status: scheduled`)
+- [x] Timeline/calendar dạng lịch tháng (toggle List | Calendar, dùng `calendar.tsx`)
+
+### Hoàn thiện tính năng hiện có (2026-09-12)
+- [x] UI/UX redesign "Calm Ops Console": palette 2 theme + token ngữ nghĩa `success`/`warning`/`info`;
+      sửa dây font Geist bị đứt; dark mode thật (anti-FOUC + toggle); emoji → lucide cho 12 entity type;
+      app shell chia nhóm Capture/Track/Assist + mobile drawer đủ 7 destination; `loading`/`error`/
+      `not-found`; a11y (aria-label, autoComplete, heading, focus ring, contrast đo được)
+- [x] Settings lưu thật: cột `households.settings` (jsonb, migration `0001`) + `PATCH /api/households`
+      — household resolve từ session (không nhận id từ client), chỉ admin, validate currency/locale/boolean
+- [x] Danh sách entity đã archive ở cuối `/life` + nút Restore
+- [x] Lịch tháng cho deadlines — `calendar.tsx` + react-day-picker trước đó được cài mà không ai dùng
+- [x] Gắn tài liệu vào entity có sẵn (`POST /api/documents`, không trích xuất, status `attached`)
+- [x] Retry extraction cho document `failed` (`PATCH /api/documents/[id]`)
+- [x] `npm test` — 8 test cho logic ngày/urgency bằng `node --test` có sẵn của Node 22, không thêm dependency
 
 ### Phase 5 — AI thật
 - [ ] **AI provider thật**: `ClaudeProvider` hoặc `OpenAIProvider` implement
@@ -54,7 +71,7 @@
 - [ ] Persist `ai_conversations` (bảng có sẵn, chat đang stateless)
 
 ### Phase 6 — Tasks & household
-- [ ] Persist task toggle (PATCH status + completedAt)
+- [x] Persist task toggle (PATCH status + completedAt) — đã xong từ trước, roadmap ghi nhầm
 - [ ] Assign/owner, workflow templates (claim bảo hành, hủy sub)
 - [ ] Mời member vào household (hiện chỉ 1 user/household)
 - [ ] Cắm `policy-engine` vào mọi external/high-impact action

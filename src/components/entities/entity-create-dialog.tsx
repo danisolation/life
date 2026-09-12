@@ -116,11 +116,15 @@ export function EntityCreateDialog() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {ENTITY_TYPES.map((t) => (
-                  <SelectItem key={t} value={t}>
-                    {ENTITY_TYPE_CONFIG[t].icon} {ENTITY_TYPE_CONFIG[t].label}
-                  </SelectItem>
-                ))}
+                {ENTITY_TYPES.map((t) => {
+                  const Icon = ENTITY_TYPE_CONFIG[t].icon;
+                  return (
+                    <SelectItem key={t} value={t}>
+                      <Icon />
+                      <span>{ENTITY_TYPE_CONFIG[t].label}</span>
+                    </SelectItem>
+                  );
+                })}
               </SelectContent>
             </Select>
           </div>

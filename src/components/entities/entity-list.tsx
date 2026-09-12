@@ -3,6 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ENTITY_TYPE_CONFIG } from "@/types";
+import { EmptyState } from "@/components/layout/empty-state";
 import Link from "next/link";
 
 interface Entity {
@@ -21,8 +22,8 @@ export function EntityList({ entities }: EntityListProps) {
   if (entities.length === 0) {
     return (
       <Card>
-        <CardContent className="py-6 text-center text-sm text-muted-foreground">
-          No entities of this type
+        <CardContent>
+          <EmptyState title="No entities of this type" />
         </CardContent>
       </Card>
     );
@@ -37,11 +38,14 @@ export function EntityList({ entities }: EntityListProps) {
             <Card className="transition-colors hover:bg-muted/50">
               <CardContent className="p-3">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span>{config?.icon}</span>
-                    <span className="font-medium text-sm truncate max-w-[150px]">
-                      {entity.name}
-                    </span>
+                  <div className="flex min-w-0 items-center gap-2">
+                    {config && (
+                      <config.icon
+                        aria-hidden
+                        className="h-4 w-4 shrink-0 text-muted-foreground"
+                      />
+                    )}
+                    <span className="truncate text-sm font-medium">{entity.name}</span>
                   </div>
                   <Badge variant="secondary" className="text-xs">
                     {config?.label}

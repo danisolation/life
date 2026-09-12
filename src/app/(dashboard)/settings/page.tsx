@@ -1,15 +1,13 @@
 import { signOut } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { households, householdMembers } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { LogOut, User, Home, Shield, Bell } from "lucide-react";
+import { LogOut, User } from "lucide-react";
 import { requireAuth } from "@/lib/session";
+import { PageHeader } from "@/components/layout/page-header";
+import { SettingsForm } from "@/components/settings/settings-form";
+import { DEFAULT_HOUSEHOLD_SETTINGS, type HouseholdSettings } from "@/types";
 
 export default async function SettingsPage() {
   const session = await requireAuth();
@@ -26,12 +24,10 @@ export default async function SettingsPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
-        <p className="text-muted-foreground">
-          Manage your account, household, and preferences.
-        </p>
-      </div>
+      <PageHeader
+        title="Settings"
+        description="Manage your account, household, and preferences."
+      />
 
       {/* Profile Section */}
       <Card>
@@ -60,123 +56,25 @@ export default async function SettingsPage() {
         </CardContent>
       </Card>
 
-      {/* Household Section */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Home className="h-5 w-5" />
-            Household
-          </CardTitle>
-          <CardDescription>Manage your household settings</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="household-name">Household Name</Label>
-            <Input
-              id="household-name"
-              defaultValue={household?.name || ""}
-              placeholder="My Household"
-            />
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="currency">Currency</Label>
-              <Input
-                id="currency"
-                defaultValue={household?.currency || "USD"}
-                placeholder="USD"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="locale">Locale</Label>
-              <Input
-                id="locale"
-                defaultValue={household?.locale || "en-US"}
-                placeholder="en-US"
-              />
-            </div>
-          </div>
-          <Button>Save Changes</Button>
-        </CardContent>
-      </Card>
-
-      {/* Permissions Section */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Shield className="h-5 w-5" />
-            Permissions & Automation
-          </CardTitle>
-          <CardDescription>
-            Control what the AI can do autonomously
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-medium">Auto-create records</p>
-                <p className="text-sm text-muted-foreground">
-                  Allow AI to create entities from documents
-                </p>
-              </div>
-              <input type="checkbox" defaultChecked className="h-4 w-4" />
-            </div>
-            <Separator />
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-medium">Proactive reminders</p>
-                <p className="text-sm text-muted-foreground">
-                  AI will create reminders for upcoming deadlines
-                </p>
-              </div>
-              <input type="checkbox" defaultChecked className="h-4 w-4" />
-            </div>
-            <Separator />
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-medium">External actions</p>
-                <p className="text-sm text-muted-foreground">
-                  Allow AI to send emails and contact providers
-                </p>
-              </div>
-              <input type="checkbox" className="h-4 w-4" />
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Notifications Section */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Bell className="h-5 w-5" />
-            Notifications
-          </CardTitle>
-          <CardDescription>Configure how you receive updates</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="font-medium">Weekly Life Brief</p>
-              <p className="text-sm text-muted-foreground">
-                Receive a weekly summary of your life admin
-              </p>
-            </div>
-            <input type="checkbox" defaultChecked className="h-4 w-4" />
-          </div>
-          <Separator />
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="font-medium">Deadline alerts</p>
-              <p className="text-sm text-muted-foreground">
-                Get notified about upcoming deadlines
-              </p>
-            </div>
-            <input type="checkbox" defaultChecked className="h-4 w-4" />
-          </div>
-        </CardContent>
-      </Card>
+      {household ? (
+        <SettingsForm
+          name={household.name}
+          currency={household.currency ?? "USD"}
+          locale={household.locale ?? "en-US"}
+          settings={{
+            ...DEFAULT_HOUSEHOLD_SETTINGS,
+            ...((household.settings ?? {}) as HouseholdSettings),
+          }}
+        />
+      ) : (
+        <Card>
+          <CardContent>
+            <p className="py-6 text-center text-sm text-muted-foreground">
+              Setting up your household…
+            </p>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Sign Out */}
       <Card>

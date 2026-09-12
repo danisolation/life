@@ -4,7 +4,6 @@ import { useState, useRef, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Bot, User, Send, Loader2 } from "lucide-react";
 
@@ -95,7 +94,7 @@ export function AIChat() {
         </CardTitle>
       </CardHeader>
       <CardContent className="flex-1 flex flex-col min-h-0">
-        <ScrollArea className="flex-1 pr-4" ref={scrollRef}>
+        <div ref={scrollRef} className="flex-1 overflow-y-auto overscroll-contain pr-4">
           <div className="space-y-4">
             {messages.map((message) => (
               <div
@@ -131,13 +130,14 @@ export function AIChat() {
                     <Bot className="h-4 w-4" />
                   </AvatarFallback>
                 </Avatar>
-                <div className="rounded-lg px-3 py-2 bg-muted">
-                  <Loader2 className="h-4 w-4 animate-spin" />
+                <div className="rounded-lg bg-muted px-3 py-2">
+                  <Loader2 aria-hidden className="h-4 w-4 animate-spin" />
+                  <span className="sr-only">Thinking…</span>
                 </div>
               </div>
             )}
           </div>
-        </ScrollArea>
+        </div>
 
         {messages.length <= 1 && (
           <div className="flex flex-wrap gap-2 py-3">
@@ -157,16 +157,21 @@ export function AIChat() {
         <div className="flex gap-2 pt-3 border-t">
           <Input
             placeholder="Ask about your life admin..."
+            aria-label="Message"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleSend()}
             disabled={isLoading}
           />
-          <Button onClick={handleSend} disabled={isLoading || !input.trim()}>
+          <Button
+            onClick={handleSend}
+            disabled={isLoading || !input.trim()}
+            aria-label="Send message"
+          >
             {isLoading ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
+              <Loader2 aria-hidden className="h-4 w-4 animate-spin" />
             ) : (
-              <Send className="h-4 w-4" />
+              <Send aria-hidden className="h-4 w-4" />
             )}
           </Button>
         </div>

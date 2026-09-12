@@ -7,6 +7,8 @@ import { UpcomingDeadlines } from "@/components/home/upcoming-deadlines";
 import { PriorityActions } from "@/components/home/priority-actions";
 import { QuickStats } from "@/components/home/quick-stats";
 import { requireAuth } from "@/lib/session";
+import { PageHeader } from "@/components/layout/page-header";
+import { daysUntil, startOfToday } from "@/lib/deadline-urgency";
 
 export default async function HomePage() {
   const session = await requireAuth();
@@ -19,10 +21,10 @@ export default async function HomePage() {
   if (!membership) {
     return (
       <div className="space-y-6">
-        <h1 className="text-3xl font-bold">Welcome to Life Admin OS</h1>
-        <p className="text-muted-foreground">
-          Setting up your household...
-        </p>
+        <PageHeader
+          title="Welcome to Life Admin OS"
+          description="Setting up your household…"
+        />
       </div>
     );
   }
@@ -68,22 +70,24 @@ export default async function HomePage() {
     upcomingReminders
   );
 
+  const today = startOfToday();
+  const remindersWithDays = upcomingReminders.map((r) => ({
+    ...r,
+    days: daysUntil(r.triggerAt, today),
+  }));
+
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">
-          Good {getGreeting()}, {session.user.name?.split(" ")[0] || "there"}
-        </h1>
-        <p className="text-muted-foreground">
-          Here&apos;s what needs your attention today.
-        </p>
-      </div>
+      <PageHeader
+        title={`Good ${getGreeting()}, ${session.user.name?.split(" ")[0] || "there"}`}
+        description="Here's what needs your attention today."
+      />
 
       {/* Health Score */}
       <LifeAdminScoreCard score={healthScore} />
 
       {/* Priority Actions */}
-      <PriorityActions reminders={upcomingReminders} tasks={pendingTasks} />
+      <PriorityActions reminders={remindersWithDays} tasks={pendingTasks} />
 
       {/* Quick Stats */}
       <QuickStats
@@ -94,7 +98,7 @@ export default async function HomePage() {
       />
 
       {/* Upcoming Deadlines */}
-      <UpcomingDeadlines reminders={upcomingReminders} />
+      <UpcomingDeadlines reminders={remindersWithDays} />
     </div>
   );
 }

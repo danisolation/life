@@ -83,8 +83,12 @@ export function EntityActions({
   return (
     <>
       <DropdownMenu>
-        <DropdownMenuTrigger render={<Button variant="outline" size="icon" />}>
-          <MoreHorizontal className="h-4 w-4" />
+        <DropdownMenuTrigger
+          render={
+            <Button variant="outline" size="icon" aria-label="Item actions" />
+          }
+        >
+          <MoreHorizontal aria-hidden className="h-4 w-4" />
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuItem onClick={() => setEditOpen(true)}>

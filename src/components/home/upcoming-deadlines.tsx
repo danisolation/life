@@ -1,7 +1,8 @@
 "use client";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { EmptyState } from "@/components/layout/empty-state";
+import { StatusBadge, urgencyTone } from "@/components/status-badge";
 import { Calendar, ChevronRight } from "lucide-react";
 import Link from "next/link";
 
@@ -11,6 +12,7 @@ interface Reminder {
   title: string;
   message: string | null;
   triggerAt: Date;
+  days: number;
 }
 
 interface UpcomingDeadlinesProps {
@@ -26,53 +28,40 @@ export function UpcomingDeadlines({ reminders }: UpcomingDeadlinesProps) {
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Calendar className="h-5 w-5" />
+          <Calendar aria-hidden className="h-5 w-5" />
           Upcoming Deadlines
         </CardTitle>
-        <CardDescription>
-          Important dates in the next 30 days
-        </CardDescription>
+        <CardDescription>Important dates in the next 30 days</CardDescription>
       </CardHeader>
       <CardContent>
         {sortedReminders.length === 0 ? (
-          <p className="text-center text-muted-foreground py-6">
-            No upcoming deadlines. Upload documents to track warranties, subscriptions, and more.
-          </p>
+          <EmptyState
+            icon={Calendar}
+            title="No upcoming deadlines"
+            description="Upload documents to track warranties, subscriptions, and more."
+          />
         ) : (
           <div className="space-y-3">
-            {sortedReminders.map((reminder) => {
-              const daysUntil = Math.ceil(
-                (new Date(reminder.triggerAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
-              );
-              return (
-                <div
-                  key={reminder.id}
-                  className="flex items-center justify-between rounded-lg border p-3"
-                >
-                  <div>
-                    <p className="font-medium">{reminder.title}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {new Date(reminder.triggerAt).toLocaleDateString("en-US", {
-                        weekday: "short",
-                        month: "short",
-                        day: "numeric",
-                      })}
-                    </p>
-                  </div>
-                  <Badge
-                    variant={
-                      daysUntil <= 3
-                        ? "destructive"
-                        : daysUntil <= 7
-                        ? "default"
-                        : "secondary"
-                    }
-                  >
-                    {daysUntil} day{daysUntil !== 1 ? "s" : ""}
-                  </Badge>
+            {sortedReminders.map((reminder) => (
+              <div
+                key={reminder.id}
+                className="flex items-center justify-between rounded-lg border p-3"
+              >
+                <div>
+                  <p className="font-medium">{reminder.title}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {new Date(reminder.triggerAt).toLocaleDateString("en-US", {
+                      weekday: "short",
+                      month: "short",
+                      day: "numeric",
+                    })}
+                  </p>
                 </div>
-              );
-            })}
+                <StatusBadge tone={urgencyTone(reminder.days)}>
+                  {reminder.days} day{reminder.days !== 1 ? "s" : ""}
+                </StatusBadge>
+              </div>
+            ))}
           </div>
         )}
         <Link
@@ -80,7 +69,7 @@ export function UpcomingDeadlines({ reminders }: UpcomingDeadlinesProps) {
           className="mt-4 flex items-center justify-center gap-1 text-sm font-medium text-primary hover:underline"
         >
           View all deadlines
-          <ChevronRight className="h-4 w-4" />
+          <ChevronRight aria-hidden className="h-4 w-4" />
         </Link>
       </CardContent>
     </Card>

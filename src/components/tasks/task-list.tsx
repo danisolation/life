@@ -4,7 +4,6 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   DropdownMenu,
@@ -14,7 +13,9 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { formatDistanceToNow } from "date-fns";
-import { Calendar, MoreHorizontal, Trash2, Loader2, ExternalLink } from "lucide-react";
+import { Calendar, MoreHorizontal, Trash2, Loader2, ExternalLink, ListChecks } from "lucide-react";
+import { EmptyState } from "@/components/layout/empty-state";
+import { StatusBadge, priorityTone, taskStatusTone } from "@/components/status-badge";
 
 interface Task {
   id: string;
@@ -37,34 +38,6 @@ export function TaskList({ tasks }: TaskListProps) {
   const router = useRouter();
   const [busyId, setBusyId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case "urgent":
-        return "bg-red-500";
-      case "high":
-        return "bg-orange-500";
-      case "medium":
-        return "bg-yellow-500";
-      case "low":
-        return "bg-green-500";
-      default:
-        return "bg-gray-500";
-    }
-  };
-
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case "completed":
-        return <Badge variant="default">Completed</Badge>;
-      case "in_progress":
-        return <Badge variant="secondary">In Progress</Badge>;
-      case "cancelled":
-        return <Badge variant="outline">Cancelled</Badge>;
-      default:
-        return <Badge variant="outline">Pending</Badge>;
-    }
-  };
 
   async function updateTask(id: string, payload: Record<string, unknown>) {
     setBusyId(id);
@@ -109,10 +82,12 @@ export function TaskList({ tasks }: TaskListProps) {
   if (tasks.length === 0) {
     return (
       <Card>
-        <CardContent className="py-12 text-center">
-          <p className="text-muted-foreground">
-            No tasks yet. Create one, or convert a deadline into a task.
-          </p>
+        <CardContent>
+          <EmptyState
+            icon={ListChecks}
+            title="No tasks yet"
+            description="Create one, or convert a deadline into a task."
+          />
         </CardContent>
       </Card>
     );
@@ -149,17 +124,20 @@ export function TaskList({ tasks }: TaskListProps) {
                     >
                       {task.title}
                     </h3>
-                    {getStatusBadge(task.status)}
+                    <StatusBadge tone={taskStatusTone(task.status)}>
+                      {task.status === "in_progress"
+                        ? "In Progress"
+                        : task.status.charAt(0).toUpperCase() + task.status.slice(1)}
+                    </StatusBadge>
                     {busy && <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />}
                   </div>
                   {task.description && (
                     <p className="text-sm text-muted-foreground mt-1">{task.description}</p>
                   )}
                   <div className="flex flex-wrap items-center gap-4 mt-2 text-xs text-muted-foreground">
-                    <div className="flex items-center gap-1">
-                      <div className={`h-2 w-2 rounded-full ${getPriorityColor(task.priority)}`} />
+                    <StatusBadge tone={priorityTone(task.priority)}>
                       <span className="capitalize">{task.priority}</span>
-                    </div>
+                    </StatusBadge>
                     {task.dueDate && (
                       <div className="flex items-center gap-1">
                         <Calendar className="h-3 w-3" />
