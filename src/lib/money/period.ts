@@ -30,3 +30,18 @@ export function daysElapsed(month: string, today: string): number {
     ? Number(today.slice(8, 10))
     : daysInMonth(month);
 }
+
+export function addDays(date: string, days: number): string {
+  const [year, month, day] = date.split("-").map(Number);
+  const next = new Date(year, month - 1, day + days);
+  return `${next.getFullYear()}-${pad(next.getMonth() + 1)}-${pad(next.getDate())}`;
+}
+
+export function weekdayOf(date: string): number {
+  const [year, month, day] = date.split("-").map(Number);
+  return new Date(year, month - 1, day).getDay();
+}
+
+export function firstOfMonth(date: string): string {
+  return `${date.slice(0, 7)}-01`;
+}

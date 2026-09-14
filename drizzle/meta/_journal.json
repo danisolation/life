@@ -8,6 +8,13 @@
       "when": 1789353181181,
       "tag": "0000_glamorous_emma_frost",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1789358355874,
+      "tag": "0001_lumpy_silver_samurai",
+      "breakpoints": true
     }
   ]
 }

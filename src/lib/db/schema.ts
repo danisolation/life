@@ -13,6 +13,8 @@ import {
 
 export const categoryKindEnum = pgEnum("category_kind", ["income", "expense"]);
 
+export const recurringFrequencyEnum = pgEnum("recurring_frequency", ["monthly", "weekly"]);
+
 export const users = pgTable(
   "users",
   {
@@ -58,6 +60,7 @@ export const transactions = pgTable(
       .notNull(),
     kind: categoryKindEnum("kind").notNull(),
     categoryId: uuid("category_id").references(() => categories.id, { onDelete: "set null" }),
+    recurringId: uuid("recurring_id").references(() => recurringRules.id, { onDelete: "set null" }),
     amountMinor: bigint("amount_minor", { mode: "number" }).notNull(),
     currency: varchar("currency", { length: 3 }).notNull(),
     occurredOn: date("occurred_on", { mode: "string" }).notNull(),
@@ -68,7 +71,36 @@ export const transactions = pgTable(
   (table) => [
     index("transactions_user_date_idx").on(table.userId, table.occurredOn),
     index("transactions_user_category_idx").on(table.userId, table.categoryId),
+    uniqueIndex("transactions_recurring_occurrence_idx").on(
+      table.userId,
+      table.recurringId,
+      table.occurredOn
+    ),
   ]
+);
+
+export const recurringRules = pgTable(
+  "recurring_rules",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: uuid("user_id")
+      .references(() => users.id, { onDelete: "cascade" })
+      .notNull(),
+    name: varchar("name", { length: 100 }).notNull(),
+    kind: categoryKindEnum("kind").notNull(),
+    categoryId: uuid("category_id").references(() => categories.id, { onDelete: "set null" }),
+    amountMinor: bigint("amount_minor", { mode: "number" }).notNull(),
+    currency: varchar("currency", { length: 3 }).notNull(),
+    frequency: recurringFrequencyEnum("frequency").notNull(),
+    dayOfMonth: integer("day_of_month"),
+    weekday: integer("weekday"),
+    startsOn: date("starts_on", { mode: "string" }).notNull(),
+    lastGeneratedOn: date("last_generated_on", { mode: "string" }),
+    archivedAt: timestamp("archived_at"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  },
+  (table) => [index("recurring_rules_user_idx").on(table.userId, table.archivedAt)]
 );
 
 export const budgets = pgTable(
@@ -93,4 +125,5 @@ export type User = typeof users.$inferSelect;
 export type Category = typeof categories.$inferSelect;
 export type Transaction = typeof transactions.$inferSelect;
 export type Budget = typeof budgets.$inferSelect;
+export type RecurringRule = typeof recurringRules.$inferSelect;
 export type CategoryKind = Category["kind"];

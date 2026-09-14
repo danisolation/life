@@ -1,12 +1,14 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import {
+  addDays,
   daysElapsed,
   daysInMonth,
   monthKey,
   monthRange,
   shiftMonth,
   todayKey,
+  weekdayOf,
 } from "./period.ts";
 
 test("monthKey uses local date parts", () => {
@@ -35,4 +37,16 @@ test("daysElapsed only trims the current month", () => {
   assert.equal(daysElapsed("2026-09", "2026-09-14"), 14);
   assert.equal(daysElapsed("2026-08", "2026-09-14"), 31);
   assert.equal(daysElapsed("2026-12", "2026-09-14"), 31);
+});
+
+test("addDays crosses months and years", () => {
+  assert.equal(addDays("2026-09-30", 1), "2026-10-01");
+  assert.equal(addDays("2026-12-31", 1), "2027-01-01");
+  assert.equal(addDays("2026-03-01", -1), "2026-02-28");
+  assert.equal(addDays("2028-03-01", -1), "2028-02-29");
+});
+
+test("weekdayOf returns the local day of week", () => {
+  assert.equal(weekdayOf("2026-09-14"), 1);
+  assert.equal(weekdayOf("2026-09-20"), 0);
 });
