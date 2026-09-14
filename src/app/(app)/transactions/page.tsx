@@ -10,6 +10,7 @@ import { MonthNav } from "@/components/money/month-nav";
 import { TransactionFilters } from "@/components/money/transaction-filters";
 import { TransactionForm } from "@/components/money/transaction-form";
 import { TransactionList } from "@/components/money/transaction-list";
+import { QuickCapture } from "@/components/money/quick-capture";
 
 export default async function TransactionsPage({
   searchParams,
@@ -72,6 +73,15 @@ export default async function TransactionsPage({
           query={query}
         />
       </div>
+
+      {selected === monthKey(new Date()) && (
+        <QuickCapture
+          currency={user.currency}
+          today={today}
+          categories={view.categories}
+          recentByNote={recentByNote}
+        />
+      )}
 
       {rows.length === 0 ? (
         <Card>

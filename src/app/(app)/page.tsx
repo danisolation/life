@@ -14,6 +14,7 @@ import { SummaryCards } from "@/components/money/summary-cards";
 import { BudgetList } from "@/components/money/budget-list";
 import { InsightList } from "@/components/money/insight-list";
 import { TransactionForm } from "@/components/money/transaction-form";
+import { QuickCapture } from "@/components/money/quick-capture";
 
 export default async function OverviewPage({
   searchParams,
@@ -56,6 +57,15 @@ export default async function OverviewPage({
       />
 
       <MonthNav month={selected} basePath="/" locale={user.locale} />
+
+      {selected === monthKey(new Date()) && (
+        <QuickCapture
+          currency={user.currency}
+          today={today}
+          categories={view.categories}
+          recentByNote={noteToCategoryMap(view.transactions)}
+        />
+      )}
 
       <SummaryCards summary={view.summary} currency={user.currency} locale={user.locale} />
 
