@@ -1,13 +1,49 @@
 import { and, desc, eq, gte, lte } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { budgets, categories, transactions } from "@/lib/db/schema";
+import { budgets, categories, recurringRules, transactions } from "@/lib/db/schema";
 import { budgetLines, type BudgetLine } from "@/lib/money/budget";
-import { formatMoney } from "@/lib/money/amount";
+import { formatMoney, minorUnitDigits } from "@/lib/money/amount";
+import { suggestBudgets, type BudgetSuggestion } from "@/lib/money/budget-suggest";
 import { compareMonths, type MonthComparison } from "@/lib/money/compare";
+import { forecast as forecastOf, type Forecast } from "@/lib/money/forecast";
 import { buildInsights, type Insight } from "@/lib/money/insights";
-import { daysElapsed, monthRange, shiftMonth } from "@/lib/money/period";
+import { dueDatesFor } from "@/lib/money/recurring";
+import {
+  daysElapsed,
+  daysInMonth,
+  monthRange,
+  shiftMonth,
+} from "@/lib/money/period";
 import { summarize, type CategoryTotal, type MonthSummary } from "@/lib/money/summary";
 import { firstDayOf } from "@/lib/validate";
+
+async function committedForMonth(
+  userId: string,
+  month: string,
+  today: string
+): Promise<number> {
+  if (month !== today.slice(0, 7)) return 0;
+
+  const rules = await db.query.recurringRules.findMany({
+    where: and(eq(recurringRules.userId, userId), eq(recurringRules.kind, "expense")),
+  });
+  const monthEnd = monthRange(month).end;
+
+  return rules.reduce((sum, rule) => {
+    if (rule.archivedAt) return sum;
+    const dates = dueDatesFor(
+      {
+        frequency: rule.frequency,
+        dayOfMonth: rule.dayOfMonth,
+        weekday: rule.weekday,
+        startsOn: rule.startsOn,
+        lastGeneratedOn: today,
+      },
+      monthEnd
+    );
+    return sum + dates.length * rule.amountMinor;
+  }, 0);
+}
 
 export type CategoryRecord = {
   id: string;
@@ -36,6 +72,9 @@ export type MonthView = {
   comparison: MonthComparison;
   lines: BudgetLine[];
   budgets: { categoryId: string; amountMinor: number }[];
+  trend: { month: string; incomeMinor: number; expenseMinor: number }[];
+  budgetSuggestions: BudgetSuggestion[];
+  forecast: Forecast | null;
   insights: Insight[];
   transactions: TransactionRecord[];
   categories: CategoryRecord[];
@@ -50,7 +89,7 @@ export async function loadMonthView(
 ): Promise<MonthView> {
   const previousMonth = shiftMonth(month, -1);
   const range = {
-    start: monthRange(shiftMonth(month, -2)).start,
+    start: monthRange(shiftMonth(month, -5)).start,
     end: monthRange(month).end,
   };
 
@@ -91,6 +130,40 @@ export async function loadMonthView(
     amountMinor: row.amountMinor,
   }));
 
+  const trend = Array.from({ length: 6 }, (_, index) => shiftMonth(month, index - 5)).map(
+    (key) => {
+      const rows = transactionRows.filter((row) => row.occurredOn.startsWith(key));
+      return {
+        month: key,
+        incomeMinor: rows
+          .filter((row) => row.kind === "income")
+          .reduce((sum, row) => sum + row.amountMinor, 0),
+        expenseMinor: rows
+          .filter((row) => row.kind === "expense")
+          .reduce((sum, row) => sum + row.amountMinor, 0),
+      };
+    }
+  );
+
+  const completedMonths = [1, 2, 3].map((offset) => shiftMonth(month, -offset));
+  const historyRows = transactionRows
+    .filter((row) => row.kind === "expense" && completedMonths.includes(row.occurredOn.slice(0, 7)))
+    .reduce<{ month: string; categoryId: string; totalMinor: number }[]>((acc, row) => {
+      if (!row.categoryId) return acc;
+      const month = row.occurredOn.slice(0, 7);
+      const existing = acc.find(
+        (item) => item.month === month && item.categoryId === row.categoryId
+      );
+      if (existing) existing.totalMinor += row.amountMinor;
+      else acc.push({ month, categoryId: row.categoryId, totalMinor: row.amountMinor });
+      return acc;
+    }, []);
+
+  const stepMinor = minorUnitDigits(money.currency) === 0 ? 100_000 : 1_000;
+  const budgetSuggestions = suggestBudgets(historyRows, { stepMinor });
+
+  const committedMinor = await committedForMonth(userId, month, today);
+
   return {
     month,
     previousMonth,
@@ -99,6 +172,18 @@ export async function loadMonthView(
     comparison: compareMonths(summary, previous),
     lines,
     budgets: budgetList,
+    trend,
+    budgetSuggestions,
+    forecast:
+      month === today.slice(0, 7)
+        ? forecastOf({
+            expenseMinor: summary.expenseMinor,
+            incomeMinor: summary.incomeMinor,
+            daysElapsed: daysElapsed(month, today),
+            daysInMonth: daysInMonth(month),
+            committedMinor,
+          })
+        : null,
     insights: buildInsights({
       summary,
       previous,

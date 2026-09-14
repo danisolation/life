@@ -15,6 +15,7 @@ import { BudgetList } from "@/components/money/budget-list";
 import { InsightList } from "@/components/money/insight-list";
 import { TransactionForm } from "@/components/money/transaction-form";
 import { QuickCapture } from "@/components/money/quick-capture";
+import { ForecastCard } from "@/components/money/forecast-card";
 
 export default async function OverviewPage({
   searchParams,
@@ -68,6 +69,10 @@ export default async function OverviewPage({
       )}
 
       <SummaryCards summary={view.summary} currency={user.currency} locale={user.locale} />
+
+      {view.forecast && (
+        <ForecastCard forecast={view.forecast} currency={user.currency} locale={user.locale} />
+      )}
 
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="space-y-6 lg:col-span-2">

@@ -11,6 +11,8 @@ import { SummaryCards } from "@/components/money/summary-cards";
 import { CategoryBars } from "@/components/money/category-bars";
 import { BudgetList } from "@/components/money/budget-list";
 import { InsightList } from "@/components/money/insight-list";
+import { ForecastCard } from "@/components/money/forecast-card";
+import { MonthTrend } from "@/components/money/month-trend";
 
 function signed(value: number, currency: string, locale: string): string {
   const formatted = formatMoney(Math.abs(value), currency, locale);
@@ -53,6 +55,12 @@ export default async function ReviewPage({
       <MonthNav month={selected} basePath="/review" locale={user.locale} />
 
       <SummaryCards summary={view.summary} currency={user.currency} locale={user.locale} />
+
+      {view.forecast && (
+        <ForecastCard forecast={view.forecast} currency={user.currency} locale={user.locale} />
+      )}
+
+      <MonthTrend rows={view.trend} currency={user.currency} locale={user.locale} />
 
       <Card>
         <CardHeader>

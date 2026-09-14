@@ -43,28 +43,33 @@ function BudgetCell({
   categoryId,
   month,
   currency,
+  locale,
   initialMinor,
+  suggestedMinor,
 }: {
   categoryId: string;
   month: string;
   currency: string;
+  locale: string;
   initialMinor: number;
+  suggestedMinor: number;
 }) {
   const router = useRouter();
   const [value, setValue] = useState(initialMinor ? amountInputValue(initialMinor, currency) : "");
   const [status, setStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [message, setMessage] = useState<string | null>(null);
 
-  async function save() {
-    const next = value.trim();
-    if (next === (initialMinor ? amountInputValue(initialMinor, currency) : "")) return;
+  async function save(next: string) {
+    const current = initialMinor ? amountInputValue(initialMinor, currency) : "";
+    if (next.trim() === current) return;
+    setValue(next);
 
     setStatus("saving");
     setMessage(null);
     const response = await fetch("/api/budgets", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ month, entries: [{ categoryId, amount: next || null }] }),
+      body: JSON.stringify({ month, entries: [{ categoryId, amount: next.trim() || null }] }),
     });
 
     if (!response.ok) {
@@ -78,17 +83,28 @@ function BudgetCell({
     router.refresh();
   }
 
+  const canSuggest = suggestedMinor > 0 && suggestedMinor !== initialMinor;
+
   return (
-    <div className="space-y-1">
+    <div className="flex flex-col items-end gap-1">
       <Input
         aria-label="Monthly budget"
         inputMode="decimal"
         placeholder="No budget"
-        className="h-8 w-36 text-right tabular-nums"
+        className="h-8 w-28 text-right tabular-nums"
         value={value}
         onChange={(event) => setValue(event.target.value)}
-        onBlur={save}
+        onBlur={() => save(value)}
       />
+      {canSuggest && (
+        <button
+          type="button"
+          className="text-xs text-muted-foreground underline-offset-4 hover:underline"
+          onClick={() => save(amountInputValue(suggestedMinor, currency))}
+        >
+          Use {formatMoney(suggestedMinor, currency, locale)}
+        </button>
+      )}
       {message && <p className="text-xs text-destructive">{message}</p>}
       {status === "saving" && <p className="text-xs text-muted-foreground">Saving…</p>}
     </div>
@@ -99,6 +115,7 @@ function CategoryRow({
   category,
   spent,
   budgetMinor,
+  suggestedMinor,
   month,
   currency,
   locale,
@@ -106,6 +123,7 @@ function CategoryRow({
   category: CategoryOption;
   spent: Spent[string] | undefined;
   budgetMinor: number;
+  suggestedMinor: number;
   month: string;
   currency: string;
   locale: string;
@@ -154,7 +172,9 @@ function CategoryRow({
           categoryId={category.id}
           month={month}
           currency={currency}
+          locale={locale}
           initialMinor={budgetMinor}
+          suggestedMinor={suggestedMinor}
         />
       )}
 
@@ -343,6 +363,7 @@ export function CategoryManager({
   categories,
   budgets,
   spent,
+  suggestions,
   month,
   currency,
   locale,
@@ -350,15 +371,54 @@ export function CategoryManager({
   categories: CategoryOption[];
   budgets: { categoryId: string; amountMinor: number }[];
   spent: Spent;
+  suggestions: Record<string, number>;
   month: string;
   currency: string;
   locale: string;
 }) {
+  const router = useRouter();
+  const [applying, setApplying] = useState(false);
+  const [applyError, setApplyError] = useState<string | null>(null);
   const budgetByCategory = new Map(budgets.map((row) => [row.categoryId, row.amountMinor]));
+
+  const pending = Object.entries(suggestions).filter(
+    ([categoryId, amountMinor]) => budgetByCategory.get(categoryId) !== amountMinor
+  );
+
+  async function applyAll() {
+    setApplying(true);
+    setApplyError(null);
+    const response = await fetch("/api/budgets", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        month,
+        entries: pending.map(([categoryId, amountMinor]) => ({
+          categoryId,
+          amount: amountInputValue(amountMinor, currency),
+        })),
+      }),
+    });
+    setApplying(false);
+
+    if (!response.ok) {
+      const data = (await response.json().catch(() => null)) as { error?: string } | null;
+      setApplyError(data?.error ?? "Could not apply the suggestions");
+      return;
+    }
+
+    router.refresh();
+  }
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-end">
+      <div className="flex flex-wrap items-center justify-end gap-3">
+        {applyError && <p className="text-sm text-destructive">{applyError}</p>}
+        {pending.length > 0 && (
+          <Button variant="outline" onClick={applyAll} disabled={applying}>
+            {applying ? "Applying…" : `Apply ${pending.length} suggested budgets`}
+          </Button>
+        )}
         <NewCategoryDialog />
       </div>
       <div className="grid gap-6 lg:grid-cols-2">
@@ -379,6 +439,7 @@ export function CategoryManager({
                       category={category}
                       spent={spent[category.id]}
                       budgetMinor={budgetByCategory.get(category.id) ?? 0}
+                      suggestedMinor={suggestions[category.id] ?? 0}
                       month={month}
                       currency={currency}
                       locale={locale}

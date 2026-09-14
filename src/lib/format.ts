@@ -10,6 +10,12 @@ export function formatMonthLabel(month: string, locale: string): string {
   );
 }
 
+export function formatMonthShort(month: string, locale: string): string {
+  return new Intl.DateTimeFormat(locale, { month: "short", year: "2-digit" }).format(
+    new Date(`${month}-01T00:00:00`)
+  );
+}
+
 export function formatDayLabel(value: string, locale: string): string {
   return new Intl.DateTimeFormat(locale, { weekday: "short", day: "2-digit", month: "short" }).format(
     new Date(`${value}T00:00:00`)

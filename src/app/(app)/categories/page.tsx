@@ -33,6 +33,9 @@ export default async function CategoriesPage({
         categories={view.categories}
         budgets={view.budgets}
         spent={view.spentByCategory}
+        suggestions={Object.fromEntries(
+          view.budgetSuggestions.map((item) => [item.categoryId, item.amountMinor])
+        )}
         month={selected}
         currency={user.currency}
         locale={user.locale}
