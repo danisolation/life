@@ -74,3 +74,7 @@ export function formatMoney(minor: number, currency: string, locale: string): st
 export function formatCompactMoney(minor: number, currency: string, locale: string): string {
   return format(minor, currency, locale, true);
 }
+
+export function amountInputValue(minor: number, currency: string): string {
+  return minorUnitDigits(currency) === 0 ? String(minor) : (minor / 100).toFixed(2);
+}
