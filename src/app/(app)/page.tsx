@@ -1,7 +1,11 @@
 import Link from "next/link";
 import { Plus, Wallet } from "lucide-react";
+import { and, eq, isNull, sql } from "drizzle-orm";
+import { db } from "@/lib/db";
+import { budgets, recurringRules, transactions } from "@/lib/db/schema";
 import { requireUser } from "@/lib/session";
-import { isMonth } from "@/lib/validate";
+import { firstDayOf, isMonth } from "@/lib/validate";
+import { hasSampleData } from "@/lib/sample-data";
 import { monthKey, todayKey } from "@/lib/money/period";
 import { loadMonthView, noteToCategoryMap } from "@/lib/money-data";
 import { formatMoney } from "@/lib/money/amount";
@@ -17,6 +21,7 @@ import { TransactionForm } from "@/components/money/transaction-form";
 import { QuickCapture } from "@/components/money/quick-capture";
 import { ForecastCard } from "@/components/money/forecast-card";
 import { ReceiptScanner } from "@/components/money/receipt-scanner";
+import { GettingStarted } from "@/components/money/getting-started";
 
 export default async function OverviewPage({
   searchParams,
@@ -37,6 +42,46 @@ export default async function OverviewPage({
     .sort((a, b) => (a.occurredOn < b.occurredOn ? 1 : -1))
     .slice(0, 5);
   const categoryById = new Map(view.categories.map((category) => [category.id, category]));
+
+  const [entryRows, budgetRows, ruleRows, sampleLoaded] = await Promise.all([
+    db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(transactions)
+      .where(eq(transactions.userId, user.id)),
+    db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(budgets)
+      .where(and(eq(budgets.userId, user.id), eq(budgets.month, firstDayOf(selected)))),
+    db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(recurringRules)
+      .where(and(eq(recurringRules.userId, user.id), isNull(recurringRules.archivedAt))),
+    hasSampleData(user.id),
+  ]);
+
+  const entryCount = entryRows[0]?.count ?? 0;
+  const steps = [
+    {
+      id: "entry",
+      label: "Record your first income or expense",
+      hint: "The one-line box above does it: type 65k lunch, or scan a receipt.",
+      done: entryCount > 0,
+    },
+    {
+      id: "budget",
+      label: "Give a category a monthly budget",
+      hint: "Categories is where budgets live, and suggestions are one click away.",
+      href: "/categories",
+      done: (budgetRows[0]?.count ?? 0) > 0,
+    },
+    {
+      id: "recurring",
+      label: "Add rent or a subscription as a recurring rule",
+      hint: "Rules add the entry for you whenever you open the app.",
+      href: "/recurring",
+      done: (ruleRows[0]?.count ?? 0) > 0,
+    },
+  ];
 
   return (
     <div className="space-y-6">
@@ -71,6 +116,7 @@ export default async function OverviewPage({
       {selected === monthKey(new Date()) && (
         <QuickCapture
           currency={user.currency}
+          locale={user.locale}
           today={today}
           categories={view.categories}
           recentByNote={noteToCategoryMap(view.transactions)}
@@ -78,6 +124,8 @@ export default async function OverviewPage({
       )}
 
       <SummaryCards summary={view.summary} currency={user.currency} locale={user.locale} />
+
+      <GettingStarted steps={steps} isEmpty={entryCount === 0} hasSample={sampleLoaded} />
 
       {view.forecast && (
         <ForecastCard forecast={view.forecast} currency={user.currency} locale={user.locale} />

@@ -45,13 +45,13 @@ export function parseAmount(input: string, currency: string): number {
     .toLowerCase()
     .replace(CURRENCY_NOISE, "")
     .replace(/\s+/g, "");
-  if (!raw) throw new Error("Amount is required");
-  if (raw.includes("-")) throw new Error("Amount must be positive");
+  if (!raw) throw new Error("Add an amount, like 65k");
+  if (raw.includes("-")) throw new Error("Amount has to be more than zero");
 
   const parsed =
     parseSuffixed(raw, digits) ?? (digits === 0 ? parseZeroDecimal(raw) : parseTwoDecimal(raw));
   if (parsed === null || !Number.isFinite(parsed) || parsed <= 0) {
-    throw new Error("Invalid amount");
+    throw new Error("Could not read that amount — try 65k or 65000");
   }
   return parsed;
 }

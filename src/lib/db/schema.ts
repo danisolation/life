@@ -65,6 +65,7 @@ export const transactions = pgTable(
     currency: varchar("currency", { length: 3 }).notNull(),
     occurredOn: date("occurred_on", { mode: "string" }).notNull(),
     note: varchar("note", { length: 500 }),
+    source: varchar("source", { length: 16 }),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at").defaultNow().notNull(),
   },

@@ -15,6 +15,13 @@
       "when": 1789358355874,
       "tag": "0001_lumpy_silver_samurai",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1789386489547,
+      "tag": "0002_opposite_carmella_unuscione",
+      "breakpoints": true
     }
   ]
 }

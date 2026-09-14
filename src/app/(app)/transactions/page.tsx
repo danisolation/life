@@ -1,4 +1,4 @@
-import { Plus, Search } from "lucide-react";
+import { Plus, Search, Wallet } from "lucide-react";
 import { requireUser } from "@/lib/session";
 import { isMonth } from "@/lib/validate";
 import { monthKey, todayKey } from "@/lib/money/period";
@@ -30,6 +30,7 @@ export default async function TransactionsPage({
   const kind = params.kind === "income" || params.kind === "expense" ? params.kind : "";
   const categoryId = params.categoryId ?? "";
   const query = (params.q ?? "").trim();
+  const filtered = Boolean(kind || categoryId || query);
 
   let rows = view.transactions.filter((row) => row.occurredOn.startsWith(selected));
   if (kind) rows = rows.filter((row) => row.kind === kind);
@@ -86,6 +87,7 @@ export default async function TransactionsPage({
       {selected === monthKey(new Date()) && (
         <QuickCapture
           currency={user.currency}
+          locale={user.locale}
           today={today}
           categories={view.categories}
           recentByNote={recentByNote}
@@ -95,11 +97,19 @@ export default async function TransactionsPage({
       {rows.length === 0 ? (
         <Card>
           <CardContent>
-            <EmptyState
-              icon={Search}
-              title="No transactions match"
-              description="Try another month, or clear the filters."
-            />
+            {filtered ? (
+              <EmptyState
+                icon={Search}
+                title="No transactions match"
+                description="Try another month, or clear the filters."
+              />
+            ) : (
+              <EmptyState
+                icon={Wallet}
+                title="Nothing recorded in this month yet"
+                description="Use the one-line box above, scan a receipt, or add it by hand."
+              />
+            )}
           </CardContent>
         </Card>
       ) : (

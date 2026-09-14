@@ -5,16 +5,19 @@ import { useRouter } from "next/navigation";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { formatMoney, parseAmount } from "@/lib/money/amount";
 import { parseQuickEntry } from "@/lib/money/quick-entry";
 import type { CategoryOption } from "./transaction-form";
 
 export function QuickCapture({
   currency,
+  locale,
   today,
   categories,
   recentByNote = {},
 }: {
   currency: string;
+  locale: string;
   today: string;
   categories: CategoryOption[];
   recentByNote?: Record<string, string>;
@@ -24,6 +27,7 @@ export function QuickCapture({
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const parsed = text.trim() ? parseQuickEntry(text, currency) : null;
 
   async function onSubmit(event: React.FormEvent) {
     event.preventDefault();
@@ -84,6 +88,20 @@ export function QuickCapture({
         </Button>
       </div>
       {error && <p className="text-sm text-destructive">{error}</p>}
+      {!error && parsed && (
+        <p className="text-xs text-muted-foreground" role="status">
+          {parsed.kind === "income" ? "Income" : "Expense"}{" "}
+          <span className="font-medium text-foreground tabular-nums">
+            {formatMoney(parseAmount(parsed.amount, currency), currency, locale)}
+          </span>
+          {parsed.note ? ` · ${parsed.note}` : ""} · saved as today
+        </p>
+      )}
+      {!error && !parsed && (
+        <p className="text-xs text-muted-foreground">
+          Amount first or last, both work. Start with + for income: “65k lunch”, “+20tr salary”.
+        </p>
+      )}
       {saved && !error && (
         <p className="text-xs text-muted-foreground" role="status">
           Saved {saved} to today
