@@ -29,6 +29,7 @@ export type TransactionRecord = {
   id: string;
   kind: "income" | "expense";
   categoryId: string | null;
+  recurringId: string | null;
   amountMinor: number;
   currency: string;
   occurredOn: string;

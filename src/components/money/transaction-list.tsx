@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { MoreHorizontal, Pencil, Repeat, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -108,8 +108,14 @@ export function TransactionList({
                         style={{ backgroundColor: category?.color ?? "#94a3b8" }}
                       />
                       <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-medium">
-                          {category?.name ?? "Uncategorized"}
+                        <p className="flex items-center gap-1.5 truncate text-sm font-medium">
+                          <span className="truncate">{category?.name ?? "Uncategorized"}</span>
+                          {transaction.recurringId && (
+                            <Repeat
+                              aria-label="Recurring"
+                              className="size-3 shrink-0 text-muted-foreground"
+                            />
+                          )}
                         </p>
                         {transaction.note && (
                           <p className="truncate text-xs text-muted-foreground">

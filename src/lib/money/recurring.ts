@@ -12,6 +12,10 @@ export type RecurringRuleLike = {
 
 const BACKLOG_MONTHS = 12;
 
+function pad(value: number): string {
+  return String(value).padStart(2, "0");
+}
+
 function earliestBacklog(today: string): string {
   return `${shiftMonth(today.slice(0, 7), -BACKLOG_MONTHS)}-01`;
 }
@@ -52,4 +56,27 @@ export function dueDatesFor(rule: RecurringRuleLike, today: string): string[] {
   }
 
   return dates;
+}
+
+export function nextDueDate(rule: RecurringRuleLike, today: string): string {
+  if (rule.frequency === "monthly") {
+    const wanted = rule.dayOfMonth ?? 1;
+    const startMonth = rule.startsOn.slice(0, 7) > today.slice(0, 7)
+      ? rule.startsOn.slice(0, 7)
+      : today.slice(0, 7);
+
+    for (let index = 0; index < 120; index += 1) {
+      const month = shiftMonth(startMonth, index);
+      const date = `${month}-${pad(Math.min(wanted, daysInMonth(month)))}`;
+      if (date > today && date >= rule.startsOn) return date;
+    }
+
+    return `${shiftMonth(startMonth, 120)}-${pad(Math.min(wanted, 28))}`;
+  }
+
+  const wantedWeekday = rule.weekday ?? 1;
+  let cursor = addDays(today, 1);
+  while (weekdayOf(cursor) !== wantedWeekday) cursor = addDays(cursor, 1);
+  while (cursor < rule.startsOn) cursor = addDays(cursor, 7);
+  return cursor;
 }

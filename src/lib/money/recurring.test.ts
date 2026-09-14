@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { dueDatesFor, type RecurringRuleLike } from "./recurring.ts";
+import { dueDatesFor, nextDueDate, type RecurringRuleLike } from "./recurring.ts";
 
 function rule(overrides: Partial<RecurringRuleLike>): RecurringRuleLike {
   return {
@@ -58,4 +58,32 @@ test("a long neglected rule only backfills the last year", () => {
   assert.equal(dates[0], "2025-09-05");
   assert.equal(dates[dates.length - 1], "2026-09-05");
   assert.equal(dates.length, 13);
+});
+
+test("next due date looks forward, not back", () => {
+  assert.equal(nextDueDate(rule({ dayOfMonth: 5 }), "2026-09-14"), "2026-10-05");
+  assert.equal(nextDueDate(rule({ dayOfMonth: 20 }), "2026-09-14"), "2026-09-20");
+  assert.equal(nextDueDate(rule({ dayOfMonth: 31 }), "2026-09-14"), "2026-09-30");
+});
+
+test("next due date respects a future start", () => {
+  assert.equal(
+    nextDueDate(rule({ dayOfMonth: 5, startsOn: "2026-11-10" }), "2026-09-14"),
+    "2026-12-05"
+  );
+  assert.equal(
+    nextDueDate(rule({ frequency: "weekly", dayOfMonth: null, weekday: 1, startsOn: "2026-10-26" }), "2026-09-14"),
+    "2026-10-26"
+  );
+});
+
+test("next weekly due date is the coming chosen weekday", () => {
+  assert.equal(
+    nextDueDate(rule({ frequency: "weekly", dayOfMonth: null, weekday: 1 }), "2026-09-14"),
+    "2026-09-21"
+  );
+  assert.equal(
+    nextDueDate(rule({ frequency: "weekly", dayOfMonth: null, weekday: 0 }), "2026-09-14"),
+    "2026-09-20"
+  );
 });
