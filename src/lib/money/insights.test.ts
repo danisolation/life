@@ -19,13 +19,15 @@ const food = (amountMinor: number, occurredOn: string): TransactionLike => ({
   note: null,
 });
 
+const formatAmount = (minor: number) => `${minor}`;
+
 test("flags a negative savings rate as critical", () => {
   const transactions: TransactionLike[] = [
     { id: "i", kind: "income", categoryId: "salary", amountMinor: 1_000_000, occurredOn: "2026-09-01", note: null },
     food(2_000_000, "2026-09-02"),
   ];
   const summary = summarize(transactions, categories, { month: "2026-09", daysElapsed: 10 });
-  const insights = buildInsights({ summary, previous: null, budgets: [], transactions, today: "2026-09-10" });
+  const insights = buildInsights({ summary, previous: null, budgets: [], transactions, today: "2026-09-10", formatAmount });
 
   assert.equal(insights.find((row) => row.id === "savings-rate")?.severity, "critical");
 });
@@ -41,7 +43,7 @@ test("flags over-budget categories and stays quiet on healthy ones", () => {
     { categoryId: "food", amountMinor: 1_000_000 },
     { categoryId: "rent", amountMinor: 5_000_000 },
   ]);
-  const insights = buildInsights({ summary, previous: null, budgets, transactions, today: "2026-09-10" });
+  const insights = buildInsights({ summary, previous: null, budgets, transactions, today: "2026-09-10", formatAmount });
 
   assert.equal(insights.find((row) => row.id === "budget-over:food")?.severity, "critical");
   assert.equal(insights.find((row) => row.id === "budget-warn:rent"), undefined);
@@ -58,6 +60,7 @@ test("flags a category spike against the previous month", () => {
     budgets: [],
     transactions: [...previousRows, ...currentRows],
     today: "2026-09-10",
+    formatAmount,
   });
 
   assert.equal(insights.find((row) => row.id === "category-spike:food")?.severity, "warning");
@@ -70,7 +73,7 @@ test("reports monthly commitments for three consecutive months", () => {
     food(1_100_000, "2026-09-05"),
   ];
   const summary = summarize(transactions, categories, { month: "2026-09", daysElapsed: 10 });
-  const insights = buildInsights({ summary, previous: null, budgets: [], transactions, today: "2026-09-10" });
+  const insights = buildInsights({ summary, previous: null, budgets: [], transactions, today: "2026-09-10", formatAmount });
 
   assert.equal(insights.find((row) => row.id === "commitments:food")?.amountMinor, 1_100_000);
 });
@@ -85,6 +88,7 @@ test("pace compares with the same days of the previous month", () => {
     budgets: [],
     transactions: [...previousRows, ...currentRows],
     today: "2026-09-10",
+    formatAmount,
   });
 
   assert.equal(insights.find((row) => row.id === "pace")?.severity, "warning");
@@ -93,7 +97,7 @@ test("pace compares with the same days of the previous month", () => {
 test("flags an unusually large transaction", () => {
   const rows = [food(100_000, "2026-09-02"), food(120_000, "2026-09-03"), food(900_000, "2026-09-04")];
   const summary = summarize(rows, categories, { month: "2026-09", daysElapsed: 10 });
-  const insights = buildInsights({ summary, previous: null, budgets: [], transactions: rows, today: "2026-09-10" });
+  const insights = buildInsights({ summary, previous: null, budgets: [], transactions: rows, today: "2026-09-10", formatAmount });
   const outlier = insights.find((row) => row.id.startsWith("outlier:"));
 
   assert.equal(outlier?.severity, "warning");
@@ -108,10 +112,35 @@ test("puts critical insights first and never repeats a severity after a lower on
   ];
   const summary = summarize(transactions, categories, { month: "2026-09", daysElapsed: 10 });
   const budgets = budgetLines(summary, [{ categoryId: "food", amountMinor: 1_000_000 }]);
-  const insights = buildInsights({ summary, previous: null, budgets, transactions, today: "2026-09-10" });
+  const insights = buildInsights({ summary, previous: null, budgets, transactions, today: "2026-09-10", formatAmount });
 
   assert.equal(insights[0].severity, "critical");
   const order = ["critical", "warning", "info"];
   const indexes = insights.map((row) => order.indexOf(row.severity));
   assert.deepEqual(indexes, [...indexes].sort((a, b) => a - b));
+});
+
+test("writes money inside insight details through the injected formatter", () => {
+  const transactions = [
+    food(900_000, "2026-09-02"),
+    food(300_000, "2026-09-03"),
+    food(900_000, "2026-09-09"),
+  ];
+  const summary = summarize(transactions, categories, { month: "2026-09", daysElapsed: 10 });
+  const budgets = budgetLines(summary, [{ categoryId: "food", amountMinor: 1_000_000 }]);
+  const insights = buildInsights({
+    summary,
+    previous: null,
+    budgets,
+    transactions,
+    today: "2026-09-10",
+    formatAmount: (minor) => `${minor.toLocaleString("vi-VN")} d`,
+  });
+
+  const over = insights.find((row) => row.id === "budget-over:food");
+  assert.ok(over, "expected an over-budget insight");
+  assert.ok(
+    over.detail.includes("1.100.000 d"),
+    `detail should carry the formatted amount, got: ${over.detail}`
+  );
 });

@@ -20,7 +20,10 @@ export default async function TransactionsPage({
   const params = await searchParams;
   const today = todayKey();
   const selected = params.month && isMonth(params.month) ? params.month : monthKey(new Date());
-  const view = await loadMonthView(user.id, selected, today);
+  const view = await loadMonthView(user.id, selected, today, {
+    currency: user.currency,
+    locale: user.locale,
+  });
 
   const kind = params.kind === "income" || params.kind === "expense" ? params.kind : "";
   const categoryId = params.categoryId ?? "";

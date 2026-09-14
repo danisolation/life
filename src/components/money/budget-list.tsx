@@ -50,7 +50,7 @@ export function BudgetList({
           </div>
           <p className="text-xs text-muted-foreground tabular-nums">
             {line.status.tone === "over"
-              ? `${Math.abs(line.status.remainingMinor)} over budget`
+              ? `${formatMoney(Math.abs(line.status.remainingMinor), currency, locale)} over budget`
               : `${formatMoney(line.status.remainingMinor, currency, locale)} left`}
           </p>
         </div>

@@ -2,6 +2,7 @@ import { and, desc, eq, gte, lte } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { budgets, categories, transactions } from "@/lib/db/schema";
 import { budgetLines, type BudgetLine } from "@/lib/money/budget";
+import { formatMoney } from "@/lib/money/amount";
 import { compareMonths, type MonthComparison } from "@/lib/money/compare";
 import { buildInsights, type Insight } from "@/lib/money/insights";
 import { daysElapsed, monthRange, shiftMonth } from "@/lib/money/period";
@@ -43,7 +44,8 @@ export type MonthView = {
 export async function loadMonthView(
   userId: string,
   month: string,
-  today: string
+  today: string,
+  money: { currency: string; locale: string }
 ): Promise<MonthView> {
   const previousMonth = shiftMonth(month, -1);
   const range = {
@@ -96,7 +98,14 @@ export async function loadMonthView(
     comparison: compareMonths(summary, previous),
     lines,
     budgets: budgetList,
-    insights: buildInsights({ summary, previous, budgets: lines, transactions: transactionRows, today }),
+    insights: buildInsights({
+      summary,
+      previous,
+      budgets: lines,
+      transactions: transactionRows,
+      today,
+      formatAmount: (minor) => formatMoney(minor, money.currency, money.locale),
+    }),
     transactions: transactionRows,
     categories: categoryList,
     spentByCategory: Object.fromEntries(

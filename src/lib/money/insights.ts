@@ -19,6 +19,7 @@ export type InsightInput = {
   budgets: BudgetLine[];
   transactions: TransactionLike[];
   today: string;
+  formatAmount: (minor: number) => string;
 };
 
 const RANK: Record<InsightSeverity, number> = { critical: 3, warning: 2, info: 1 };
@@ -43,7 +44,10 @@ function savingsRate(summary: MonthSummary, previous: MonthSummary | null): Insi
   ];
 }
 
-function budgetInsights(rows: BudgetLine[]): Insight[] {
+function budgetInsights(
+  rows: BudgetLine[],
+  formatAmount: (minor: number) => string
+): Insight[] {
   const out: Insight[] = [];
 
   for (const row of rows.filter((line) => line.status.tone === "over").slice(0, 3)) {
@@ -52,7 +56,7 @@ function budgetInsights(rows: BudgetLine[]): Insight[] {
       severity: "critical",
       categoryId: row.categoryId,
       title: `${row.name} is over budget`,
-      detail: `${row.status.pct}% of the budget used, ${Math.abs(row.status.remainingMinor)} over.`,
+      detail: `${row.status.pct}% of the budget used, ${formatAmount(Math.abs(row.status.remainingMinor))} over.`,
       amountMinor: row.spentMinor,
     });
   }
@@ -63,7 +67,7 @@ function budgetInsights(rows: BudgetLine[]): Insight[] {
       severity: "warning",
       categoryId: row.categoryId,
       title: `${row.name} is close to its budget`,
-      detail: `${row.status.pct}% used, ${row.status.remainingMinor} left.`,
+      detail: `${row.status.pct}% used, ${formatAmount(row.status.remainingMinor)} left.`,
       amountMinor: row.spentMinor,
     });
   }
@@ -71,7 +75,11 @@ function budgetInsights(rows: BudgetLine[]): Insight[] {
   return out;
 }
 
-function categorySpikes(current: MonthSummary, previous: MonthSummary | null): Insight[] {
+function categorySpikes(
+  current: MonthSummary,
+  previous: MonthSummary | null,
+  formatAmount: (minor: number) => string
+): Insight[] {
   if (!previous || current.expenseMinor <= 0) return [];
 
   return current.byCategory
@@ -92,7 +100,7 @@ function categorySpikes(current: MonthSummary, previous: MonthSummary | null): I
       severity: "warning" as const,
       categoryId: row.categoryId,
       title: `${row.name} jumped ${pct}%`,
-      detail: `This month it is up by ${delta} compared with last month.`,
+      detail: `This month it is up by ${formatAmount(delta)} compared with last month.`,
       amountMinor: row.totalMinor,
     }));
 }
@@ -226,12 +234,12 @@ function outliers(summary: MonthSummary, transactions: TransactionLike[]): Insig
 }
 
 export function buildInsights(input: InsightInput): Insight[] {
-  const { summary, previous, budgets: budgetRows, transactions, today } = input;
+  const { summary, previous, budgets: budgetRows, transactions, today, formatAmount } = input;
 
   return [
     ...savingsRate(summary, previous),
-    ...budgetInsights(budgetRows),
-    ...categorySpikes(summary, previous),
+    ...budgetInsights(budgetRows, formatAmount),
+    ...categorySpikes(summary, previous, formatAmount),
     ...topCategory(summary),
     ...commitments(summary, transactions),
     ...pace(summary, transactions, today),

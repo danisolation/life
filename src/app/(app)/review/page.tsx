@@ -26,7 +26,10 @@ export default async function ReviewPage({
   const { month } = await searchParams;
   const today = todayKey();
   const selected = month && isMonth(month) ? month : monthKey(new Date());
-  const view = await loadMonthView(user.id, selected, today);
+  const view = await loadMonthView(user.id, selected, today, {
+    currency: user.currency,
+    locale: user.locale,
+  });
   const colors = colorByCategory(view.categories);
   const { comparison } = view;
 

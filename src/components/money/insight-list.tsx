@@ -5,6 +5,10 @@ import { StatusBadge, insightTone } from "@/components/status-badge";
 import { formatMoney } from "@/lib/money/amount";
 import type { Insight } from "@/lib/money/insights";
 
+function severityLabel(severity: string): string {
+  return severity.charAt(0).toUpperCase() + severity.slice(1);
+}
+
 export function InsightList({
   insights,
   currency,
@@ -34,7 +38,7 @@ export function InsightList({
             <div className="min-w-0 space-y-1">
               <div className="flex flex-wrap items-center gap-2">
                 <StatusBadge tone={insightTone(insight.severity)}>
-                  {insight.severity}
+                  {severityLabel(insight.severity)}
                 </StatusBadge>
                 <p className="text-sm font-medium">{insight.title}</p>
               </div>

@@ -24,7 +24,10 @@ export default async function OverviewPage({
   const { month } = await searchParams;
   const today = todayKey();
   const selected = month && isMonth(month) ? month : monthKey(new Date());
-  const view = await loadMonthView(user.id, selected, today);
+  const view = await loadMonthView(user.id, selected, today, {
+    currency: user.currency,
+    locale: user.locale,
+  });
 
   const monthTransactions = view.transactions.filter((row) => row.occurredOn.startsWith(selected));
   const recent = [...monthTransactions]
@@ -69,14 +72,16 @@ export default async function OverviewPage({
           </div>
 
           <Card>
-            <CardHeader className="flex-row items-baseline justify-between">
-              <CardTitle>Recent activity</CardTitle>
-              <Link
-                href={`/transactions?month=${selected}`}
-                className="text-sm text-muted-foreground underline-offset-4 hover:underline"
-              >
-                View all
-              </Link>
+            <CardHeader>
+              <div className="flex items-baseline justify-between gap-4">
+                <CardTitle>Recent activity</CardTitle>
+                <Link
+                  href={`/transactions?month=${selected}`}
+                  className="text-sm text-muted-foreground underline-offset-4 hover:underline"
+                >
+                  View all
+                </Link>
+              </div>
             </CardHeader>
             <CardContent>
               {recent.length === 0 ? (

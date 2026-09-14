@@ -138,3 +138,63 @@ Khi verify bằng grep, tìm từng phần (`20.000.000`) thay vì chuỗi ghép
 `src/lib/money/amount.test.ts` đã chuẩn hoá non-breaking space
 (`replace(/\u00a0/g, " ")`); nếu máy khác in ra kiểu khác (ví dụ `₫50.000`),
 sửa kỳ vọng của test theo output thật — logic không đổi.
+
+## Console đầy warning "Base UI: ... expected a native <button>"
+
+```
+Base UI: A component that acts as a button expected a native <button> because
+the `nativeButton` prop is true. Rendering a non-<button> removes native button
+semantics ... Use a real <button> in the `render` prop, or set `nativeButton`
+to `false`.
+```
+
+**Nguyên nhân:** `<Button render={<Link />}>` — Base UI Button mặc định coi
+`render` là một `<button>`; render ra `<a>` thì vừa mất semantics vừa phát
+warning, và badge "Issues" của Next dev hiện đỏ ở góc dưới trái.
+
+**Fix:** điều hướng thì dùng `Link` + `buttonVariants`, đừng mượn Base UI Button:
+
+```tsx
+import { buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+
+<Link href="/x" className={cn(buttonVariants({ variant: "outline", size: "icon" }))}>
+  <ChevronLeft />
+</Link>
+```
+
+Nếu buộc phải render thứ khác `<button>`, truyền `nativeButton={false}`.
+`<DialogTrigger render={<Button />}>` thì **không** dính lỗi này vì Button render
+ra `<button>` thật.
+
+## `CardHeader` có sẵn `flex-col`, đè bằng `flex-row` không ăn
+
+`CardHeader` là `cn("flex flex-col gap-0.5 p-4", className)`. Thêm
+`className="flex-row"` **không** thắng, vì thứ tự trong file CSS sinh ra quyết
+định chứ không phải thứ tự class trong attribute. Muốn tiêu đề và action nằm
+cùng dòng thì tự bọc một `div`:
+
+```tsx
+<CardHeader>
+  <div className="flex items-baseline justify-between gap-4">
+    <CardTitle>Recent activity</CardTitle>
+    <Link href="...">View all</Link>
+  </div>
+</CardHeader>
+```
+
+## URL sai vẫn ra 404 mặc định của Next
+
+`src/app/(app)/not-found.tsx` chỉ chạy khi code trong nhóm `(app)` gọi
+`notFound()`. URL không khớp route nào thì Next dùng `src/app/not-found.tsx`
+(cấp gốc) — không có file đó thì hiện trang 404 trần của Next. App này có cả
+hai: bản gốc để bắt URL sai, bản trong `(app)` để render trong app shell.
+
+## Số tiền thô lọt vào câu chữ
+
+`Insight` được dựng trong `src/lib/money/insights.ts`, một pure function không
+biết currency/locale. Nếu nó tự nối `${minor}` vào `detail`, người dùng sẽ thấy
+`623000 over` thay vì `623.000 ₫ over`. Vì vậy `buildInsights` nhận
+`formatAmount` (bắt buộc, không optional) — call site trong `src/lib/money-data.ts`
+truyền `formatMoney(minor, currency, locale)`. Test
+`writes money inside insight details through the injected formatter` canh chỗ này.
