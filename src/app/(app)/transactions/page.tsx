@@ -11,6 +11,7 @@ import { TransactionFilters } from "@/components/money/transaction-filters";
 import { TransactionForm } from "@/components/money/transaction-form";
 import { TransactionList } from "@/components/money/transaction-list";
 import { QuickCapture } from "@/components/money/quick-capture";
+import { ReceiptScanner } from "@/components/money/receipt-scanner";
 
 export default async function TransactionsPage({
   searchParams,
@@ -49,17 +50,25 @@ export default async function TransactionsPage({
         title="Transactions"
         description="Everything you recorded, newest first."
         action={
-          <TransactionForm
-            categories={view.categories}
-            currency={user.currency}
-            today={today}
-            recentByNote={recentByNote}
-            trigger={
-              <>
-                <Plus /> Add
-              </>
-            }
-          />
+          <div className="flex items-start gap-2">
+            <ReceiptScanner
+              categories={view.categories}
+              currency={user.currency}
+              today={today}
+              recentByNote={recentByNote}
+            />
+            <TransactionForm
+              categories={view.categories}
+              currency={user.currency}
+              today={today}
+              recentByNote={recentByNote}
+              trigger={
+                <>
+                  <Plus /> Add
+                </>
+              }
+            />
+          </div>
         }
       />
 

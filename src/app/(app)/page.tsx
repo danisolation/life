@@ -16,6 +16,7 @@ import { InsightList } from "@/components/money/insight-list";
 import { TransactionForm } from "@/components/money/transaction-form";
 import { QuickCapture } from "@/components/money/quick-capture";
 import { ForecastCard } from "@/components/money/forecast-card";
+import { ReceiptScanner } from "@/components/money/receipt-scanner";
 
 export default async function OverviewPage({
   searchParams,
@@ -43,17 +44,25 @@ export default async function OverviewPage({
         title="Overview"
         description="How this month is going."
         action={
-          <TransactionForm
-            categories={view.categories}
-            currency={user.currency}
-            today={today}
-            recentByNote={noteToCategoryMap(view.transactions)}
-            trigger={
-              <>
-                <Plus /> Add
-              </>
-            }
-          />
+          <div className="flex items-start gap-2">
+            <ReceiptScanner
+              categories={view.categories}
+              currency={user.currency}
+              today={today}
+              recentByNote={noteToCategoryMap(view.transactions)}
+            />
+            <TransactionForm
+              categories={view.categories}
+              currency={user.currency}
+              today={today}
+              recentByNote={noteToCategoryMap(view.transactions)}
+              trigger={
+                <>
+                  <Plus /> Add
+                </>
+              }
+            />
+          </div>
         }
       />
 

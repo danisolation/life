@@ -36,12 +36,21 @@ export type TransactionRecord = {
   note: string | null;
 };
 
+export type TransactionDraft = {
+  kind: "income" | "expense";
+  amount: string;
+  occurredOn: string;
+  note: string;
+  categoryId?: string | null;
+};
+
 export function TransactionForm({
   categories,
   currency,
   today,
   recentByNote = {},
   transaction,
+  draft,
   trigger,
   open: controlledOpen,
   onOpenChange,
@@ -51,6 +60,7 @@ export function TransactionForm({
   today: string;
   recentByNote?: Record<string, string>;
   transaction?: TransactionRecord;
+  draft?: TransactionDraft;
   trigger?: React.ReactNode;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
@@ -60,13 +70,21 @@ export function TransactionForm({
   const open = controlledOpen ?? internalOpen;
   const setOpen = onOpenChange ?? setInternalOpen;
 
-  const [kind, setKind] = useState<"income" | "expense">(transaction?.kind ?? "expense");
-  const [categoryId, setCategoryId] = useState(transaction?.categoryId ?? "");
-  const [amount, setAmount] = useState(
-    transaction ? amountInputValue(transaction.amountMinor, transaction.currency) : ""
+  const [kind, setKind] = useState<"income" | "expense">(
+    transaction?.kind ?? draft?.kind ?? "expense"
   );
-  const [occurredOn, setOccurredOn] = useState(transaction?.occurredOn ?? today);
-  const [note, setNote] = useState(transaction?.note ?? "");
+  const [categoryId, setCategoryId] = useState(
+    transaction?.categoryId ?? draft?.categoryId ?? ""
+  );
+  const [amount, setAmount] = useState(
+    transaction
+      ? amountInputValue(transaction.amountMinor, transaction.currency)
+      : (draft?.amount ?? "")
+  );
+  const [occurredOn, setOccurredOn] = useState(
+    transaction?.occurredOn ?? draft?.occurredOn ?? today
+  );
+  const [note, setNote] = useState(transaction?.note ?? draft?.note ?? "");
   const [error, setError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -126,9 +144,13 @@ export function TransactionForm({
       {trigger && <DialogTrigger render={<Button />}>{trigger}</DialogTrigger>}
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{transaction ? "Edit transaction" : "Add transaction"}</DialogTitle>
+          <DialogTitle>
+            {transaction ? "Edit transaction" : draft ? "Check your receipt" : "Add transaction"}
+          </DialogTitle>
           <DialogDescription>
-            Amounts are in {currency}. Shortcuts like 50k or 1,5tr work.
+            {draft
+              ? "Filled in from the photo by Gemini. Check every field before saving — the amount is the one the reader found."
+              : `Amounts are in ${currency}. Shortcuts like 50k or 1,5tr work.`}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={onSubmit} className="space-y-4">
