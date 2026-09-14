@@ -24,6 +24,9 @@ nhận `userId` từ client. Lỗi luôn có dạng `{ "error": string }`.
 | `DELETE /api/recurring/[id]` | – | 200 `{ ok: true }` | 404 |
 | `PATCH /api/settings` | `{ name?, currency?, locale? }` | 200 `{ user }` | 400, 409 đổi currency khi đã có giao dịch |
 | `POST /api/settings/password` | `{ current, next }` | 200 `{ ok: true }` | 400, 401 sai mật khẩu hiện tại |
+| `POST /api/receipts/extract` | `multipart/form-data`, field `image` | 200 `{ draft: { amount, occurredOn, note, kind } }` | 400 ảnh sai/không phải ảnh, 422 không đọc được tổng, 429 hết quota AI, 502 AI lỗi, 503 chưa cấu hình key |
+| `POST /api/ai/suggest-category` | `{ note, kind }` | 200 `{ categoryId, name }` hoặc `{ categoryId: null }` | 400 note/kind sai |
+| `POST /api/ai/month-summary` | `{ month }` | 200 `{ summary }` | 400 month sai hoặc tháng chưa có dữ liệu, 429 hết quota, 502 AI lỗi, 503 chưa cấu hình key |
 
 Ghi chú:
 

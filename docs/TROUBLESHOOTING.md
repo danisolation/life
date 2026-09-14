@@ -198,3 +198,47 @@ biết currency/locale. Nếu nó tự nối `${minor}` vào `detail`, người 
 `formatAmount` (bắt buộc, không optional) — call site trong `src/lib/money-data.ts`
 truyền `formatMoney(minor, currency, locale)`. Test
 `writes money inside insight details through the injected formatter` canh chỗ này.
+
+## Gemini báo `enum[N]: cannot be empty`
+
+```
+400 GenerateContentRequest.generation_config.response_schema.properties[category].enum[3]: cannot be empty
+```
+
+**Nguyên nhân:** tôi thêm `""` vào `enum` để làm lựa chọn "không cái nào phù hợp".
+Gemini không chấp nhận chuỗi rỗng trong enum.
+
+**Fix:** dùng sentinel (`NO_CATEGORY = "--none--"`) và coi nó là "không gợi ý"
+khi parse (`src/lib/ai/category.ts`). Đừng dùng chuỗi rỗng.
+
+## Gemini trả về rỗng dù status 200
+
+**Triệu chứng:** `candidates[0].content.parts` rỗng, `textLen=0`.
+
+**Nguyên nhân:** model 2.5 có "thinking" và **token suy nghĩ tính vào
+`maxOutputTokens`**. Với `maxOutputTokens: 32`, đo được
+`thoughtsTokenCount: 62` → hết ngân sách trước khi in ra chữ nào.
+
+**Fix:** nâng ngân sách (256–1200 tuỳ việc) hoặc tắt hẳn cho việc đơn giản:
+`generationConfig.thinkingConfig.thinkingBudget: 0` — dùng cho phân loại category.
+`generateJson()` trong `src/lib/ai/gemini.ts` nhận `thinkingBudget` và
+`maxOutputTokens`.
+
+## Gemini 429 — hết quota free tier
+
+```
+429 Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests,
+limit: 20, model: gemini-2.5-flash
+```
+
+**Nguyên nhân:** free tier giới hạn **20 request/ngày** cho `gemini-2.5-flash`.
+Trong lúc test tôi đã gọi hết quota, và các lần gọi sau đó fail **ngẫu nhiên**
+(3/5 lần) — rất dễ chẩn đoán nhầm thành lỗi code.
+
+**Fix:** `generateJson` ném `GeminiError` mang theo status; route map 429 thành
+429 kèm message nói rõ hết quota và cách xử lý (`geminiErrorMessage`). Muốn dùng
+nhiều thì bật billing cho key, hoặc đổi sang model khác.
+
+> Cách chẩn đoán nhanh khi AI trả kết quả thất thường: gọi thẳng API bằng curl
+> (hoặc script nhỏ) và in `status`, `finishReason`, `thoughtsTokenCount` — đừng
+> đoán từ phía app.
