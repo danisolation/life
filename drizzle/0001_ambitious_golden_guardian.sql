@@ -1,1 +1,0 @@
-ALTER TABLE "households" ADD COLUMN "settings" jsonb DEFAULT '{}'::jsonb NOT NULL;

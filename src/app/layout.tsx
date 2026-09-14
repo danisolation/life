@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Life Admin OS",
-  description: "Your personal life operations system",
+  title: "Money",
+  description: "Personal money tracker",
 };
 
 export default function RootLayout({

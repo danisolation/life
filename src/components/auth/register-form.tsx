@@ -1,68 +1,62 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Loader2 } from "lucide-react";
-import Link from "next/link";
 
 export function RegisterForm() {
   const router = useRouter();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
-  async function handleRegister(e: React.FormEvent) {
-    e.preventDefault();
-    setIsLoading(true);
+  const tooShort = password.length > 0 && password.length < 8;
+
+  async function onSubmit(event: React.FormEvent) {
+    event.preventDefault();
+    if (tooShort) return;
+    setIsSaving(true);
     setError(null);
 
-    try {
-      const response = await fetch("/api/auth/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, password }),
-      });
+    const response = await fetch("/api/auth/register", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name, email, password }),
+    });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        setError(data.error || "Registration failed");
-      } else {
-        router.push("/login?registered=true");
-      }
-    } catch {
-      setError("Something went wrong");
-    } finally {
-      setIsLoading(false);
+    if (!response.ok) {
+      const data = (await response.json().catch(() => null)) as { error?: string } | null;
+      setError(data?.error ?? "Something went wrong");
+      setIsSaving(false);
+      return;
     }
+
+    router.replace("/");
+    router.refresh();
   }
 
   return (
-    <Card>
+    <Card className="w-full max-w-sm">
       <CardHeader>
         <CardTitle>Create account</CardTitle>
-        <CardDescription>
-          Start managing your life admin
-        </CardDescription>
+        <CardDescription>Start tracking your money in a minute.</CardDescription>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleRegister} className="space-y-4">
+        <form onSubmit={onSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="name">Name</Label>
             <Input
               id="name"
-              type="text"
-              placeholder="Your name"
               autoComplete="name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
               required
+              value={name}
+              onChange={(event) => setName(event.target.value)}
             />
           </div>
           <div className="space-y-2">
@@ -70,11 +64,10 @@ export function RegisterForm() {
             <Input
               id="email"
               type="email"
-              placeholder="you@example.com"
               autoComplete="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
               required
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
             />
           </div>
           <div className="space-y-2">
@@ -83,28 +76,25 @@ export function RegisterForm() {
               id="password"
               type="password"
               autoComplete="new-password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              minLength={8}
               required
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
             />
+            {tooShort && (
+              <p className="text-sm text-muted-foreground">At least 8 characters.</p>
+            )}
           </div>
-          {error && (
-            <p role="alert" className="text-sm text-destructive">
-              {error}
-            </p>
-          )}
-          <Button type="submit" className="w-full" disabled={isLoading}>
-            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Create account
+          {error && <p className="text-sm text-destructive">{error}</p>}
+          <Button type="submit" className="w-full" disabled={isSaving || tooShort || !password}>
+            {isSaving ? "Creating…" : "Create account"}
           </Button>
+          <p className="text-center text-sm text-muted-foreground">
+            Already have an account?{" "}
+            <Link href="/login" className="underline">
+              Sign in
+            </Link>
+          </p>
         </form>
-        <p className="mt-4 text-center text-sm text-muted-foreground">
-          Already have an account?{" "}
-          <Link href="/login" className="font-medium text-primary hover:underline">
-            Sign in
-          </Link>
-        </p>
       </CardContent>
     </Card>
   );

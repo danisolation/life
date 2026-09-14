@@ -36,8 +36,8 @@ yarn-error.log*
 # vercel
 .vercel
 
-# user uploads (local file storage)
-/uploads
+# local agent config
+.commandcode/
 
 # typescript
 *.tsbuildinfo

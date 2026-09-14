@@ -1,69 +1,45 @@
-import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/db";
-import { users, householdMembers, households } from "@/lib/db/schema";
+import { NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
-import bcrypt from "bcryptjs";
+import { db } from "@/lib/db";
+import { categories, users } from "@/lib/db/schema";
+import { defaultCategoryRows } from "@/lib/db/default-categories";
+import { hashPassword } from "@/lib/auth";
+import { setSessionCookie } from "@/lib/session";
+import { EMAIL_RE, readJson } from "@/lib/validate";
 
-export async function POST(request: NextRequest) {
-  try {
-    const { name, email, password } = await request.json();
+export async function POST(request: Request) {
+  const body = await readJson(request);
+  if (!body) return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
 
-    if (!email || !password) {
-      return NextResponse.json(
-        { error: "Email and password are required" },
-        { status: 400 }
-      );
-    }
+  const email = typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
+  const name = typeof body.name === "string" ? body.name.trim() : "";
+  const password = typeof body.password === "string" ? body.password : "";
 
-    // Check if user already exists
-    const existingUser = await db.query.users.findFirst({
-      where: eq(users.email, email),
-    });
-
-    if (existingUser) {
-      return NextResponse.json(
-        { error: "User with this email already exists" },
-        { status: 400 }
-      );
-    }
-
-    // Hash password
-    const passwordHash = await bcrypt.hash(password, 12);
-
-    // Create user
-    const [user] = await db
-      .insert(users)
-      .values({
-        email,
-        name,
-        passwordHash,
-      })
-      .returning();
-
-    // Create household for the user
-    const [household] = await db
-      .insert(households)
-      .values({
-        name: `${name}'s Household`,
-      })
-      .returning();
-
-    // Add user to household as admin
-    await db.insert(householdMembers).values({
-      householdId: household.id,
-      userId: user.id,
-      role: "admin",
-    });
-
-    return NextResponse.json(
-      { message: "User created successfully" },
-      { status: 201 }
-    );
-  } catch (error) {
-    console.error("Registration error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+  if (!EMAIL_RE.test(email)) {
+    return NextResponse.json({ error: "Enter a valid email address" }, { status: 400 });
   }
+  if (!name || name.length > 100) {
+    return NextResponse.json({ error: "Name is required" }, { status: 400 });
+  }
+  if (password.length < 8) {
+    return NextResponse.json({ error: "Password must be at least 8 characters" }, { status: 400 });
+  }
+
+  const existing = await db.query.users.findFirst({ where: eq(users.email, email) });
+  if (existing) {
+    return NextResponse.json({ error: "An account with this email already exists" }, { status: 409 });
+  }
+
+  const passwordHash = await hashPassword(password);
+  const created = await db.transaction(async (tx) => {
+    const [user] = await tx.insert(users).values({ email, name, passwordHash }).returning();
+    await tx.insert(categories).values(defaultCategoryRows(user.id));
+    return user;
+  });
+
+  await setSessionCookie(created.id);
+  return NextResponse.json(
+    { user: { id: created.id, email: created.email, name: created.name } },
+    { status: 201 }
+  );
 }

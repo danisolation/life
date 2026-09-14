@@ -1,25 +1,13 @@
-import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
+import { getCurrentUser } from "@/lib/session";
 import { RegisterForm } from "@/components/auth/register-form";
 
 export default async function RegisterPage() {
-  const session = await auth();
-
-  if (session?.user) {
-    redirect("/");
-  }
+  if (await getCurrentUser()) redirect("/");
 
   return (
-    <div className="flex min-h-dvh items-center justify-center bg-muted/10 p-4">
-      <div className="w-full max-w-md space-y-6">
-        <div className="text-center">
-          <h1 className="text-2xl font-semibold tracking-tight">Life Admin OS</h1>
-          <p className="text-muted-foreground">
-            Create your account to get started
-          </p>
-        </div>
-        <RegisterForm />
-      </div>
+    <div className="flex min-h-full flex-1 items-center justify-center bg-muted/10 p-6">
+      <RegisterForm />
     </div>
   );
 }
