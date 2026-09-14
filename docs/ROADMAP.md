@@ -42,14 +42,22 @@
       có tháng chi vượt thu, category spike, budget warn + over, giao dịch bất thường
 - [x] Viết lại README + 7 tài liệu trong `docs/`
 
+### Tính năng (đợt 2 — nhập nhanh, định kỳ, dự báo)
+- [x] Nhập 1 dòng: `65k ăn trưa`, `+20tr lương` — parse ở client, POST qua endpoint cũ
+- [x] Giao dịch định kỳ: bảng `recurring_rules`, sinh khi mở app (không cron),
+      chống trùng bằng unique `(userId, recurringId, occurredOn)`, trang `/recurring`
+- [x] Dự báo cuối tháng: chiếu theo tốc độ chi + các khoản định kỳ còn lại
+- [x] Gợi ý ngân sách từ trung vị (dưới) 3 tháng đã qua, áp dụng từng dòng hoặc tất cả
+- [x] Biểu đồ xu hướng 6 tháng + bảng số liệu ở Review
+- [x] PWA: manifest + icon sinh bằng script node, cài lên màn hình chính
+- [x] `npm run icons` sinh lại icon
+
 ## Tiếp theo (để sau, chưa làm)
 
 ### Tính năng
 - [ ] Ví/tài khoản + số dư, chuyển khoản giữa ví
-- [ ] Giao dịch định kỳ tự sinh (rent, subscription)
 - [ ] Import CSV sao kê ngân hàng
 - [ ] Chụp hoá đơn → tự tạo giao dịch (**cần AI, chỉ làm khi được yêu cầu**)
-- [ ] Biểu đồ xu hướng nhiều tháng
 - [ ] Xuất dữ liệu (CSV/JSON)
 - [ ] Nhắc nhở qua email khi vượt budget
 - [ ] Nhiều người dùng, chia sẻ household

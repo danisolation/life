@@ -54,6 +54,7 @@ Tài khoản demo sau khi seed: `demo@money.local` / `money1234` (VND, 6 tháng 
 | `npm run db:migrate`  | Apply migration                          |
 | `npm run db:seed`     | Seed tài khoản demo + 6 tháng dữ liệu    |
 | `npm run db:studio`   | Drizzle Studio GUI                       |
+| `npm run icons`       | Sinh lại icon PWA (192/512/apple)        |
 
 ## Tài liệu
 
@@ -61,7 +62,7 @@ Tài khoản demo sau khi seed: `demo@money.local` / `money1234` (VND, 6 tháng 
 | ---------------------------------------------- | ---------------------------------------------------- |
 | [`docs/SETUP.md`](docs/SETUP.md)               | Setup máy mới từ A–Z, checklist verify                |
 | [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | Kiến trúc, luồng đọc/ghi, auth, quy ước tiền          |
-| [`docs/DATABASE.md`](docs/DATABASE.md)         | 4 bảng, migration, backup/restore, query debug        |
+| [`docs/DATABASE.md`](docs/DATABASE.md)         | 5 bảng, migration, backup/restore, query debug        |
 | [`docs/API.md`](docs/API.md)                   | Toàn bộ endpoint + ví dụ curl                         |
 | [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md)   | Quy ước code, cách thêm trang/endpoint, commit        |
 | [`docs/ROADMAP.md`](docs/ROADMAP.md)           | Đã xong gì, tiếp theo làm gì                          |
@@ -71,11 +72,15 @@ Tài khoản demo sau khi seed: `demo@money.local` / `money1234` (VND, 6 tháng 
 
 ## Trạng thái hiện tại
 
-- [x] Schema 4 bảng (`users`, `categories`, `transactions`, `budgets`) + migration `0000`
+- [x] Schema 5 bảng (`users`, `categories`, `transactions`, `budgets`, `recurring_rules`) + migration `0000`, `0001`
 - [x] Auth: đăng ký/đăng nhập/đăng xuất, session cookie HttpOnly ký HMAC, đổi mật khẩu
-- [x] Logic tiền thuần: parse/format minor units, kỳ tháng, tổng hợp, so sánh, ngân sách, 8 insight rule — 29 unit test
-- [x] API mutation: transactions, categories, budgets, settings
-- [x] 5 trang: Overview, Transactions, Categories, Review, Settings
+- [x] Logic tiền thuần: parse/format minor units, kỳ tháng, tổng hợp, so sánh, ngân sách, dự báo, gợi ý ngân sách, 8 insight rule, lịch định kỳ — 58 unit test
+- [x] API mutation: transactions, categories, budgets, recurring, settings
+- [x] Nhập nhanh 1 dòng (`65k ăn trưa`, `+20tr lương`) ngay trên Overview/Transactions
+- [x] Giao dịch định kỳ: rule tháng/tuần, tự sinh khi mở app, chống sinh trùng bằng unique index
+- [x] Dự báo cuối tháng, gợi ý ngân sách theo trung vị, biểu đồ xu hướng 6 tháng
+- [x] PWA: cài lên màn hình chính (không offline)
+- [x] 6 trang: Overview, Transactions, Recurring, Categories, Review, Settings
 - [x] Seed demo 6 tháng VND + tài liệu
 
 Chi tiết và việc tiếp theo: [`docs/ROADMAP.md`](docs/ROADMAP.md).

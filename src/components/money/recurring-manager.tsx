@@ -81,8 +81,12 @@ function RuleForm({
   );
   const [categoryId, setCategoryId] = useState(rule?.categoryId ?? "");
   const [frequency, setFrequency] = useState<"monthly" | "weekly">(rule?.frequency ?? "monthly");
-  const [dayOfMonth, setDayOfMonth] = useState(String(rule?.dayOfMonth ?? 1));
-  const [weekday, setWeekday] = useState(String(rule?.weekday ?? 1));
+  const [dayOfMonth, setDayOfMonth] = useState(
+    String(rule?.dayOfMonth ?? Number(today.slice(8, 10)))
+  );
+  const [weekday, setWeekday] = useState(
+    String(rule?.weekday ?? new Date(`${today}T00:00:00`).getDay())
+  );
   const [startsOn, setStartsOn] = useState(rule?.startsOn ?? today);
   const [error, setError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);

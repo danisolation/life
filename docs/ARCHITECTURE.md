@@ -13,9 +13,14 @@ Browser
 ```
 
 Đọc dữ liệu **không** đi qua REST: `src/lib/money-data.ts` là nơi duy nhất
-query 3 tháng giao dịch + categories + budgets của một tháng, rồi trả về
-summary/comparison/budgetLines/insights đã tính sẵn. Overview và Review dùng
-chung loader này nên không thể lệch nhau.
+query 6 tháng giao dịch + categories + budgets + recurring rules, rồi trả về
+summary / comparison / budgetLines / insights / trend / budgetSuggestions /
+forecast đã tính sẵn. Overview và Review dùng chung loader này nên không thể
+lệch nhau.
+
+`(app)/layout.tsx` gọi `materializeRecurring(user.id, today)` mỗi lần render:
+rule đến hạn được sinh thành giao dịch thật, chống trùng bằng unique index nên
+gọi lại bao nhiêu lần cũng an toàn. Nhờ vậy không cần cron hay worker.
 
 ## 2. Cấu trúc thư mục
 
@@ -86,6 +91,22 @@ budget-warn, category-spike, top-category, commitments, pace, outlier. Mỗi rul
 nhận dữ liệu đã tính, trả về `Insight { id, severity, title, detail, amountMinor? }`,
 cuối cùng sort theo severity rồi theo số tiền. Ngưỡng là heuristic, sửa trong
 file này là đủ — không cần migration.
+
+`buildInsights` nhận `formatAmount` **bắt buộc**, do `money-data` truyền
+`formatMoney(minor, currency, locale)`. Không có default để một chỗ quên truyền
+là lộ ra ngay chứ không âm thầm in số thô ra UI.
+
+Bốn hàm pure khác cũng nằm trong `src/lib/money/`:
+
+- `forecast.ts` — chiếu chi tiêu cuối tháng = đã chi + (chi/ngày × ngày còn lại)
+  + các khoản định kỳ còn lại trong tháng. Công thức này được in thẳng trên UI.
+- `budget-suggest.ts` — **trung vị dưới** của 3 tháng đã qua, làm tròn lên theo
+  bước (100k với currency 0 chữ số thập phân). Trung vị dưới để một tháng mua sắm
+  đột biến không trở thành ngân sách gợi ý.
+- `recurring.ts` — `dueDatesFor(rule, today)` và `nextDueDate(rule, today)`, nhận
+  `today` làm tham số nên test được và không lệch timezone.
+- `quick-entry.ts` — `parseQuickEntry("65k ăn trưa")`: tách số tiền ở bất kỳ đâu
+  trong chuỗi, `+` đầu số nghĩa là thu nhập, phần chữ còn lại là note.
 
 Đây **không phải AI**. Mọi con số đều tất định và giải thích được.
 

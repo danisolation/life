@@ -19,6 +19,9 @@ nhận `userId` từ client. Lỗi luôn có dạng `{ "error": string }`.
 | `PATCH /api/categories/[id]` | `{ name?, color?, sortOrder?, archived? }` | 200 `{ category }` | 400 (kể cả gửi `kind`), 404 |
 | `DELETE /api/categories/[id]` | – | 200 `{ ok: true }` | 404, 409 còn giao dịch (gợi ý archive) |
 | `PUT /api/budgets` | `{ month, entries: [{ categoryId, amount }] }` | 200 `{ budgets }` | 400, 404 |
+| `POST /api/recurring` | `{ name, kind, categoryId?, amount, frequency, dayOfMonth?\|weekday?, startsOn }` | 201 `{ rule }` | 400, 404 category không thuộc user / lệch kind |
+| `PATCH /api/recurring/[id]` | `{ name?, amount?, categoryId?, frequency?, dayOfMonth?, weekday?, startsOn?, archived? }` | 200 `{ rule }` | 400 (kể cả gửi `kind`), 404 |
+| `DELETE /api/recurring/[id]` | – | 200 `{ ok: true }` | 404 |
 | `PATCH /api/settings` | `{ name?, currency?, locale? }` | 200 `{ user }` | 400, 409 đổi currency khi đã có giao dịch |
 | `POST /api/settings/password` | `{ current, next }` | 200 `{ ok: true }` | 400, 401 sai mật khẩu hiện tại |
 
@@ -28,6 +31,9 @@ Ghi chú:
   `"12.50"`); server parse bằng `parseAmount` theo `currency` của user.
 - `PUT /api/budgets` là bulk upsert trong một transaction DB; `amount` null hoặc
   rỗng thì xoá dòng budget đó. Chỉ nhận category `kind = expense` của chính user.
+- `POST /api/recurring` không sinh giao dịch ngay: rule được lưu rồi
+  `materializeRecurring` (chạy khi render layout `(app)`) mới sinh các kỳ đã tới
+  hạn. Đổi `kind` của rule bị chặn để không lệch với giao dịch đã sinh.
 - `PATCH /api/categories/[id]` không cho đổi `kind` (sẽ làm lệch giao dịch cũ).
 
 ## Ví dụ curl

@@ -22,8 +22,15 @@ Enum duy nhất: `category_kind` = `income | expense`.
 | ---- | --- | ------- |
 | `users` | id, email (unique), name, passwordHash, **currency** (3, default VND), **locale** (default `vi-VN`), createdAt, updatedAt | Một người dùng một tài khoản |
 | `categories` | id, userId→users cascade, name(50), kind enum, color(7 hex), sortOrder, **archivedAt** nullable, createdAt, updatedAt | Unique `(userId, kind, name)`; xoá mềm để giữ lịch sử giao dịch |
-| `transactions` | id, userId cascade, kind enum, categoryId→categories **set null**, **amountMinor** bigint, **currency**(3), **occurredOn** date, note(500), createdAt, updatedAt | Index `(userId, occurredOn)` và `(userId, categoryId)` |
+| `transactions` | id, userId cascade, kind enum, categoryId→categories **set null**, **recurringId**→recurring_rules **set null**, **amountMinor** bigint, **currency**(3), **occurredOn** date, note(500), createdAt, updatedAt | Index `(userId, occurredOn)`, `(userId, categoryId)`; unique `(userId, recurringId, occurredOn)` chống sinh trùng |
 | `budgets` | id, userId cascade, categoryId→categories cascade, **month** date (ngày 01), amountMinor bigint, createdAt, updatedAt | Unique `(userId, categoryId, month)`; chỉ đặt cho category expense |
+| `recurring_rules` | id, userId cascade, name(100), kind enum, categoryId→categories set null, amountMinor bigint, currency(3), **frequency** enum, **dayOfMonth** (1–31), **weekday** (0–6), **startsOn** date, **lastGeneratedOn** date nullable, archivedAt, createdAt, updatedAt | Index `(userId, archivedAt)`; `materializeRecurring` chạy mỗi lần render layout `(app)` |
+
+Enum: `category_kind` = `income \| expense`, `recurring_frequency` = `monthly \| weekly`.
+
+> Unique index `(userId, recurringId, occurredOn)`: Postgres coi NULL là khác nhau,
+> nên giao dịch nhập tay (`recurringId` NULL) không bao giờ đụng nhau, còn giao
+> dịch do rule sinh ra thì **không thể trùng** kể cả khi mở hai tab cùng lúc.
 
 Quy ước:
 
