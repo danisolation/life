@@ -87,6 +87,8 @@ export function TransactionForm({
   const [note, setNote] = useState(transaction?.note ?? draft?.note ?? "");
   const [error, setError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [suggestion, setSuggestion] = useState<"history" | "ai" | null>(null);
+  const [isAsking, setIsAsking] = useState(false);
 
   const options = categories.filter(
     (category) =>
@@ -99,12 +101,36 @@ export function TransactionForm({
     if (current && current.kind !== next) setCategoryId("");
   }
 
-  function suggestFromNote() {
-    if (categoryId) return;
-    const match = recentByNote[note.trim().toLowerCase()];
-    if (!match) return;
-    const category = categories.find((item) => item.id === match);
-    if (category && category.kind === kind && !category.archivedAt) setCategoryId(match);
+  async function suggestFromNote() {
+    if (categoryId || !note.trim()) return;
+
+    const historyMatch = recentByNote[note.trim().toLowerCase()];
+    if (historyMatch) {
+      const category = categories.find((item) => item.id === historyMatch);
+      if (category && category.kind === kind && !category.archivedAt) {
+        setCategoryId(historyMatch);
+        setSuggestion("history");
+        return;
+      }
+    }
+
+    setIsAsking(true);
+    const response = await fetch("/api/ai/suggest-category", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ note, kind }),
+    }).catch(() => null);
+    setIsAsking(false);
+
+    if (!response?.ok) return;
+    const data = (await response.json().catch(() => null)) as { categoryId?: string | null } | null;
+    if (!data?.categoryId) return;
+
+    const category = categories.find((item) => item.id === data.categoryId);
+    if (!category || category.kind !== kind || category.archivedAt) return;
+
+    setCategoryId(data.categoryId);
+    setSuggestion("ai");
   }
 
   async function onSubmit(event: React.FormEvent) {
@@ -186,7 +212,10 @@ export function TransactionForm({
               id="category"
               className="h-8 w-full rounded-lg border border-input bg-transparent px-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
               value={categoryId}
-              onChange={(event) => setCategoryId(event.target.value)}
+              onChange={(event) => {
+                setCategoryId(event.target.value);
+                setSuggestion(null);
+              }}
             >
               <option value="">Uncategorized</option>
               {options.map((category) => (
@@ -195,6 +224,19 @@ export function TransactionForm({
                 </option>
               ))}
             </select>
+            {isAsking && (
+              <p className="text-xs text-muted-foreground">Looking for a fitting category…</p>
+            )}
+            {!isAsking && suggestion === "history" && (
+              <p className="text-xs text-muted-foreground">
+                You filed this note the same way before.
+              </p>
+            )}
+            {!isAsking && suggestion === "ai" && (
+              <p className="text-xs text-muted-foreground">
+                Suggested by Gemini — change it if it is wrong.
+              </p>
+            )}
           </div>
 
           <div className="space-y-2">

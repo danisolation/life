@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/session";
 import { todayKey } from "@/lib/money/period";
-import { geminiConfigured, readReceiptImage } from "@/lib/ai/gemini";
+import { geminiConfigured, geminiErrorMessage, readReceiptImage } from "@/lib/ai/gemini";
 import { parseReceiptResponse } from "@/lib/ai/receipt";
 
 const MAX_BYTES = 6 * 1024 * 1024;
@@ -52,9 +52,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ draft });
   } catch (error) {
     console.error("receipt extraction failed", error);
-    return NextResponse.json(
-      { error: "The receipt reader is not available right now. Try again." },
-      { status: 502 }
-    );
+    const { message, status } = geminiErrorMessage(error);
+    return NextResponse.json({ error: message }, { status });
   }
 }

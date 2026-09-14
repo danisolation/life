@@ -13,6 +13,7 @@ import { BudgetList } from "@/components/money/budget-list";
 import { InsightList } from "@/components/money/insight-list";
 import { ForecastCard } from "@/components/money/forecast-card";
 import { MonthTrend } from "@/components/money/month-trend";
+import { MonthSummaryCard } from "@/components/money/month-summary-card";
 
 function signed(value: number, currency: string, locale: string): string {
   const formatted = formatMoney(Math.abs(value), currency, locale);
@@ -179,6 +180,8 @@ export default async function ReviewPage({
           emptyLabel="Nothing worth flagging this month"
         />
       </div>
+
+      <MonthSummaryCard month={selected} />
     </div>
   );
 }
