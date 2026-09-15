@@ -14,6 +14,7 @@ import {
   monthRange,
   shiftMonth,
 } from "@/lib/money/period";
+import { monthPlan, type MonthPlan } from "@/lib/money/plan";
 import { summarize, type CategoryTotal, type MonthSummary } from "@/lib/money/summary";
 import { firstDayOf } from "@/lib/validate";
 
@@ -72,6 +73,7 @@ export type MonthView = {
   comparison: MonthComparison;
   lines: BudgetLine[];
   budgets: { categoryId: string; amountMinor: number }[];
+  plan: MonthPlan;
   trend: { month: string; incomeMinor: number; expenseMinor: number }[];
   budgetSuggestions: BudgetSuggestion[];
   forecast: Forecast | null;
@@ -109,6 +111,9 @@ export async function loadMonthView(
 
   const transactionRows = rows as TransactionRecord[];
   const categoryList = categoryRows as CategoryRecord[];
+  const kinds: Record<string, "income" | "expense"> = Object.fromEntries(
+    categoryList.map((category) => [category.id, category.kind])
+  );
   const monthRows = transactionRows.filter((row) => row.occurredOn.startsWith(month));
   const previousRows = transactionRows.filter((row) => row.occurredOn.startsWith(previousMonth));
 
@@ -121,14 +126,15 @@ export async function loadMonthView(
     daysElapsed: daysElapsed(previousMonth, today),
   });
 
-  const lines = budgetLines(
-    summary,
-    budgetRows.map((row) => ({ categoryId: row.categoryId, amountMinor: row.amountMinor }))
-  );
   const budgetList = budgetRows.map((row) => ({
     categoryId: row.categoryId,
     amountMinor: row.amountMinor,
   }));
+  const lines = budgetLines(
+    summary,
+    budgetList.filter((budget) => kinds[budget.categoryId] === "expense")
+  );
+  const plan = monthPlan({ budgets: budgetList, kinds });
 
   const trend = Array.from({ length: 6 }, (_, index) => shiftMonth(month, index - 5)).map(
     (key) => {
@@ -172,6 +178,7 @@ export async function loadMonthView(
     comparison: compareMonths(summary, previous),
     lines,
     budgets: budgetList,
+    plan,
     trend,
     budgetSuggestions,
     forecast:
