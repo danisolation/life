@@ -20,6 +20,7 @@ import { InsightList } from "@/components/money/insight-list";
 import { TransactionForm } from "@/components/money/transaction-form";
 import { QuickCapture } from "@/components/money/quick-capture";
 import { ForecastCard } from "@/components/money/forecast-card";
+import { PlanCard } from "@/components/money/plan-card";
 import { ReceiptScanner } from "@/components/money/receipt-scanner";
 import { GettingStarted } from "@/components/money/getting-started";
 
@@ -124,6 +125,15 @@ export default async function OverviewPage({
       )}
 
       <SummaryCards summary={view.summary} currency={user.currency} locale={user.locale} />
+
+      {view.plan.hasIncomePlan && (
+        <PlanCard
+          plan={view.plan}
+          actualNetMinor={view.summary.netMinor}
+          currency={user.currency}
+          locale={user.locale}
+        />
+      )}
 
       <GettingStarted steps={steps} isEmpty={entryCount === 0} hasSample={sampleLoaded} />
 

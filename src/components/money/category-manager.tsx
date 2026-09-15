@@ -167,7 +167,7 @@ function CategoryRow({
         </p>
       </div>
 
-      {category.kind === "expense" && !category.archivedAt && (
+      {!category.archivedAt && (
         <BudgetCell
           categoryId={category.id}
           month={month}
