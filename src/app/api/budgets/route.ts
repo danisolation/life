@@ -25,14 +25,12 @@ export async function PUT(request: Request) {
   const ownCategories = await db.query.categories.findMany({
     where: eq(categories.userId, user.id),
   });
-  const expenseIds = new Set(
-    ownCategories.filter((category) => category.kind === "expense").map((category) => category.id)
-  );
+  const ownIds = new Set(ownCategories.map((category) => category.id));
 
   const parsed: { categoryId: string; amountMinor: number | null }[] = [];
   for (const entry of body.entries as Record<string, unknown>[]) {
     const categoryId = typeof entry.categoryId === "string" ? entry.categoryId : "";
-    if (!expenseIds.has(categoryId)) {
+    if (!ownIds.has(categoryId)) {
       return NextResponse.json({ error: "Category not found" }, { status: 404 });
     }
 
